@@ -12,6 +12,7 @@ use std::collections::{BTreeMap, BTreeSet};
 mod cell;
 mod print;
 mod range;
+mod revision;
 mod sheet;
 mod style;
 mod workbook;
@@ -24,6 +25,7 @@ pub use cell::{
 };
 #[cfg(feature = "chrono")]
 pub use cell::{excel_serial_to_duration, excel_serial_to_naive_datetime};
+pub use revision::Revision;
 
 #[cfg(test)]
 use print::MAX_HEADER_FOOTER_BYTES;
