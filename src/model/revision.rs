@@ -31,8 +31,19 @@ pub struct RevisionChange {
     change: RevisionChangeEnum,
 }
 
+/// One revision log
 #[derive(Debug, Clone)]
 pub struct Revision {
+    /// Revision id from r:id
+    pub revision_id: usize,
+    /// User name from userName field
+    pub user_name: String,
+    /// Revision log's revisions
+    pub changes: Vec<RevisionChange>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ParsedRevisionHeaders {
     pub revision_id: usize,
     pub user_name: String,
     pub changes: Vec<RevisionChange>,

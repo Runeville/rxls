@@ -13,6 +13,7 @@ mod comments;
 mod drawing;
 mod refs;
 mod relationships;
+mod revision;
 mod style;
 mod tables;
 mod theme;
@@ -49,6 +50,7 @@ pub(crate) use relationships::{
 use relationships::{
     OOXML_RELATIONSHIPS_NAMESPACE_STRICT, OOXML_RELATIONSHIPS_NAMESPACE_TRANSITIONAL,
 };
+use revision::{parse_revision_headers, ParsedRevisionHeaders};
 use style::parse_styles;
 #[cfg(test)]
 use style::{
@@ -84,7 +86,9 @@ use crate::{Alignment, BorderStyle, HAlign};
 use crate::{
     Cell, CellStyle, DvKind, DvOp, PrintLossKind, PrintPageOrder, StyleLoss, StyleLossKind,
 };
-use crate::{Color, DocProperties, FormatScript, Sheet, SheetType, StyleFidelity, Workbook};
+use crate::{
+    Color, DocProperties, FormatScript, Revision, Sheet, SheetType, StyleFidelity, Workbook,
+};
 
 /// Detect the ZIP/OOXML magic (`PK\x03\x04`).
 pub(crate) fn is_xlsx(bytes: &[u8]) -> bool {
@@ -103,6 +107,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
     let workbook_xml = part(&mut zip, &workbook_path).ok_or(Error::MissingWorkbook)?;
     let workbook_rels_xml = part(&mut zip, &sheet_rels_path(&workbook_path)).unwrap_or_default();
     let workbook_relationships = parse_ooxml_relationships(&workbook_rels_xml);
+    let workbook_revisions_headers_xml = part(&mut zip, "/xl/revisions/revisionHeaders.xml");
     let shared_xml = match workbook_related_part(
         &mut zip,
         &workbook_path,
@@ -432,6 +437,33 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
             ..Default::default()
         });
     }
+
+    let revisions = if let Some(revision_headers_xml) = workbook_revisions_headers_xml {
+        let revision_headers_xml = r#"
+        <headers xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+                 xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+            <header
+                guid="{123}"
+                dateTime="2026-09-07T13:15:06"
+                userName="Thunderobot"
+                r:id="rId1" />
+
+            <header
+                guid="{456}"
+                dateTime="2026-09-07T13:15:12"
+                userName="Alice"
+                r:id="rId2" />
+        </headers>
+    "#;
+        let revisions: Vec<Revision> = Vec::with_capacity(3);
+        let parsed = parse_revision_headers(&revision_headers_xml);
+
+        println!("{parsed:#?}");
+        Some(revisions)
+    } else {
+        None
+    };
+
     Ok(Workbook {
         sheets,
         date1904,
@@ -442,6 +474,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         properties,
         defined_names,
         local_defined_names,
+        revisions,
         ..Default::default()
     })
 }
