@@ -439,22 +439,6 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
     }
 
     let revisions = if let Some(revision_headers_xml) = workbook_revisions_headers_xml {
-        let revision_headers_xml = r#"
-        <headers xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-                 xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-            <header
-                guid="{123}"
-                dateTime="2026-09-07T13:15:06"
-                userName="Thunderobot"
-                r:id="rId1" />
-
-            <header
-                guid="{456}"
-                dateTime="2026-09-07T13:15:12"
-                userName="Alice"
-                r:id="rId2" />
-        </headers>
-    "#;
         let revisions: Vec<Revision> = Vec::with_capacity(3);
         let parsed = parse_revision_headers(&revision_headers_xml);
 
