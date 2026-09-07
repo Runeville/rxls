@@ -1,6 +1,6 @@
 use super::{
-    Dimensions, FormulaRange, HeaderRow, ImageFmt, Picture, Range, Sheet, SheetMetadata, Table,
-    WorksheetMetadata,
+    Dimensions, FormulaRange, HeaderRow, ImageFmt, Picture, Range, Revision, Sheet, SheetMetadata,
+    Table, WorksheetMetadata,
 };
 
 /// Public workbook-level metadata.
@@ -87,6 +87,8 @@ pub struct LocalDefinedName {
 pub struct Workbook {
     /// Sheets in workbook order.
     pub sheets: Vec<Sheet>,
+    /// Shared workbook revisions (absent if workbook is not shared)
+    pub revisions: Option<Vec<Revision>>,
     /// `true` if the workbook uses the 1904 date system (Mac Excel), which shifts
     /// how [`crate::Cell::Date`] serials map to calendar dates.
     pub date1904: bool,
