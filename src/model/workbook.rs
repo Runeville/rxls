@@ -87,7 +87,7 @@ pub struct LocalDefinedName {
 pub struct Workbook {
     /// Sheets in workbook order.
     pub sheets: Vec<Sheet>,
-    /// Shared workbook revisions (absent if workbook is not shared)
+    /// Shared workbook revisions. Absent if workbook is not shared.
     pub revisions: Option<Vec<Revision>>,
     /// `true` if the workbook uses the 1904 date system (Mac Excel), which shifts
     /// how [`crate::Cell::Date`] serials map to calendar dates.
