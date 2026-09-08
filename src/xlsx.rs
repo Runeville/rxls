@@ -443,9 +443,13 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         let mut revisions: Vec<Revision> = Vec::with_capacity(parsed.revisions.len());
 
         for revision_header in parsed.revisions {
-            let revision_log_path =
-                &format!("/xl/revisions/revisionLog{}.xml", revision_header.rid);
-            let revision_xml = part(&mut zip, revision_log_path);
+            let rid = revision_header
+                .rid
+                .strip_prefix("rId")
+                .unwrap_or(&revision_header.rid);
+            let revision_log_path = format!("/xl/revisions/revisionLog{}.xml", rid);
+
+            let revision_xml = part(&mut zip, &revision_log_path);
 
             println!("{revision_log_path}");
 
