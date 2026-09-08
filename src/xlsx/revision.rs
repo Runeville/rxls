@@ -179,10 +179,10 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> Revision 
             Ok(Event::Start(e)) => match local(e.name().as_ref()) {
                 b"rcc" => {
                     current_change = Some(RevisionChangeBuilder {
-                        rid: attr(&e, b"rid")
+                        rid: attr(&e, b"rId")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
-                        sid: attr(&e, b"sid")
+                        sid: attr(&e, b"sId")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
                         change: None,
@@ -208,10 +208,10 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> Revision 
 
             Ok(Event::Empty(e)) => match local(e.name().as_ref()) {
                 b"rrc" => changes.push(RevisionChangeBuilder {
-                    rid: attr(&e, b"rid")
+                    rid: attr(&e, b"rId")
                         .and_then(|value| value.parse::<usize>().ok())
                         .unwrap_or_default(),
-                    sid: attr(&e, b"sid")
+                    sid: attr(&e, b"sId")
                         .and_then(|value| value.parse::<usize>().ok())
                         .unwrap_or_default(),
                     change: Some(RevisionChangeEnumBuilder::RevisionRowColumn {
