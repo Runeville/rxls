@@ -442,13 +442,13 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         let parsed = parse_revision_headers(&revision_headers_xml);
         let mut revisions: Vec<Revision> = Vec::with_capacity(parsed.revisions.len());
 
-        println!("{parsed:#?}");
-
         for revision_header in parsed.revisions {
-            let revision_xml = part(
-                &mut zip,
-                &format!("/xl/revisions/revisionLog{}", revision_header.rid),
-            );
+            let revision_log_path =
+                &format!("/xl/revisions/revisionLog{}.xml", revision_header.rid);
+            let revision_xml = part(&mut zip, revision_log_path);
+
+            println!("{revision_log_path}");
+
             if let Some(revision_xml) = revision_xml {
                 let revision = parse_revision(&revision_xml, &revision_header);
                 revisions.push(revision);
