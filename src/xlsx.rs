@@ -448,10 +448,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
                 .strip_prefix("rId")
                 .unwrap_or(&revision_header.rid);
             let revision_log_path = format!("/xl/revisions/revisionLog{}.xml", rid);
-
             let revision_xml = part(&mut zip, &revision_log_path);
-
-            println!("{revision_log_path}");
 
             if let Some(revision_xml) = revision_xml {
                 let revision = parse_revision(&revision_xml, &revision_header);
