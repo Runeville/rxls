@@ -50,7 +50,7 @@ pub(crate) use relationships::{
 use relationships::{
     OOXML_RELATIONSHIPS_NAMESPACE_STRICT, OOXML_RELATIONSHIPS_NAMESPACE_TRANSITIONAL,
 };
-use revision::{parse_revision_headers, ParsedRevisionHeaders};
+use revision::{parse_revision, parse_revision_headers};
 use style::parse_styles;
 #[cfg(test)]
 use style::{
@@ -439,10 +439,22 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
     }
 
     let revisions = if let Some(revision_headers_xml) = workbook_revisions_headers_xml {
-        let revisions: Vec<Revision> = Vec::with_capacity(3);
         let parsed = parse_revision_headers(&revision_headers_xml);
+        let mut revisions: Vec<Revision> = Vec::with_capacity(parsed.revisions.len());
 
         println!("{parsed:#?}");
+
+        for revision_header in parsed.revisions {
+            let revision_xml = part(
+                &mut zip,
+                &format!("/xl/revisions/revisionLog{}", revision_header.rid),
+            );
+            if let Some(revision_xml) = revision_xml {
+                let revision = parse_revision(&revision_xml, &revision_header);
+                revisions.push(revision);
+            }
+        }
+
         Some(revisions)
     } else {
         None
