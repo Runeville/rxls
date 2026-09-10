@@ -1,7 +1,11 @@
+#[cfg(feature = "serde")]
+use serde::Serialize;
+
 use super::Cell;
 
 /// Enum for `RevisionChangeEnum::RevisionRowColumn.action`
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum RevisionRowColumnAction {
     /// InsertRow
     InsertRow,
@@ -11,6 +15,7 @@ pub enum RevisionRowColumnAction {
 
 /// Enum that provides different types of revision change
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum RevisionChangeEnum {
     /// Insert or delete row or column
     RevisionRowColumn {
@@ -41,6 +46,7 @@ pub enum RevisionChangeEnum {
 
 /// One revision inside revisionLog
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct RevisionChange {
     /// Revision id
     pub rid: usize,
@@ -52,6 +58,7 @@ pub struct RevisionChange {
 
 /// One revision log
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Revision {
     /// Revision id from r:id
     pub revision_id: String,
