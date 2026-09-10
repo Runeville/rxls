@@ -1,5 +1,5 @@
 #[cfg(feature = "serde")]
-use serde::de::VariantAccess;
+use serde::{de::VariantAccess, Serialize};
 /// Calendar date/time decoded from an Excel serial number.
 ///
 /// This is a small dependency-free alternative to a `chrono` type. Pass the
@@ -100,6 +100,7 @@ pub fn excel_serial_to_duration(serial: f64) -> Option<chrono::Duration> {
 /// A typed cell value — the reader API. Mirrors the common spreadsheet cell
 /// kinds; dates are pre-rendered to an ISO string (no `chrono` dependency).
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum Cell {
     /// Text (shared-string or inline-string) cell.
     Text(String),
