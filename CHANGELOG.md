@@ -39,6 +39,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Fixed default-style columns collapsing to zero width in Excel after
+  `Workbook::open` followed by `to_xlsx` (#94). Column records now include
+  their inherited width while retaining explicit widths, hidden/grouped
+  columns, and default, row, column, and cell formats.
 - Kept cached-formula warnings through document-property edits and aligned
   their restoration with undo/redo without carrying them into another workbook.
 - Preserved the current print-preview page when applying edits or undo/redo,
