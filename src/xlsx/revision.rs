@@ -199,7 +199,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> Revision 
                     }
                 }
 
-                b"v" => {
+                b"v" | b"t" => {
                     parser_state = Some(ParserState::V);
                 }
 
