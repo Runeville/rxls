@@ -111,7 +111,7 @@ pub use model::{
     HeaderFooterMetadata, HeaderRow, Image, ImageFmt, ImportedAxisMeasure, LocalDefinedName,
     OoxmlImplicitRowHeight, PageSetup, Picture, PrintFidelity, PrintLoss, PrintLossKind,
     PrintMetadata, PrintPageOrder, ProtectionOptions, Range, RangeRow, RangeRowCells,
-    RangeRowUsedCells, RangeRows, Reader, Revision, RevisionChange, RevisionChangeEnum,
+    RangeRowUsedCells, RangeRows, Reader, Revision, RevisionChange, RevisionLog,
     RevisionRowColumnAction, Series, Sheet, SheetMetadata, SheetType, SheetView, SheetVisible,
     Sparkline, SparklineKind, StyleFidelity, StyleLoss, StyleLossKind, Table, TextRun, VAlign,
     Workbook, WorkbookMetadata, XlsbDefaultColumnWidth,

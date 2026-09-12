@@ -87,7 +87,8 @@ use crate::{
     Cell, CellStyle, DvKind, DvOp, PrintLossKind, PrintPageOrder, StyleLoss, StyleLossKind,
 };
 use crate::{
-    Color, DocProperties, FormatScript, Revision, Sheet, SheetType, StyleFidelity, Workbook,
+    Color, DocProperties, FormatScript, Revision, RevisionLog, Sheet, SheetType, StyleFidelity,
+    Workbook,
 };
 
 /// Detect the ZIP/OOXML magic (`PK\x03\x04`).
@@ -438,9 +439,9 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         });
     }
 
-    let revisions = if let Some(revision_headers_xml) = workbook_revisions_headers_xml {
+    let revision_logs = if let Some(revision_headers_xml) = workbook_revisions_headers_xml {
         let parsed = parse_revision_headers(&revision_headers_xml);
-        let mut revisions: Vec<Revision> = Vec::with_capacity(parsed.revisions.len());
+        let mut revision_logs: Vec<RevisionLog> = Vec::with_capacity(parsed.revisions.len());
 
         for revision_header in parsed.revisions {
             let rid = revision_header
@@ -452,11 +453,11 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
 
             if let Some(revision_xml) = revision_xml {
                 let revision = parse_revision(&revision_xml, &revision_header);
-                revisions.push(revision);
+                revision_logs.push(revision);
             }
         }
 
-        Some(revisions)
+        Some(revision_logs)
     } else {
         None
     };
@@ -471,7 +472,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         properties,
         defined_names,
         local_defined_names,
-        revisions,
+        revision_logs,
         ..Default::default()
     })
 }
