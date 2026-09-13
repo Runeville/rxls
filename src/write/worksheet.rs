@@ -589,6 +589,12 @@ pub(super) fn worksheet_xml(
     col_keys.extend(sheet.hidden_cols.iter().copied().filter(|c| *c <= MAX_COL));
     col_keys.extend(col_style_xfs.keys().copied());
     if default_style_xf.is_some() || !col_keys.is_empty() {
+        // ISO/IEC 29500-1 §18.3.1.13: <col width> includes padding, unlike
+        // Excel's displayed ColumnWidth. With our Normal font (Calibri 11),
+        // 9.140625 gives the same 64 px / 8.43 displayed width as an absent
+        // <col>. Excel treats a style-only <col> without width as zero (#94).
+        // Keep explicit sheet/column widths, including an intentional zero.
+        let default_col_width = sheet.default_col_width.unwrap_or(9.140625);
         let mut cols_body = String::new();
         let mut emitted_cols = false;
         let mut next_default_col = 0u16;
@@ -596,7 +602,7 @@ pub(super) fn worksheet_xml(
             if let Some(xf) = default_style_xf {
                 if next_default_col < col {
                     let xml = format!(
-                        r#"<col min="{}" max="{}" style="{xf}"/>"#,
+                        r#"<col min="{}" max="{}" style="{xf}" width="{default_col_width}"/>"#,
                         next_default_col + 1,
                         col
                     );
@@ -608,6 +614,8 @@ pub(super) fn worksheet_xml(
             let mut attrs = format!(r#" min="{0}" max="{0}""#, col + 1);
             if let Some(w) = widths.get(&col) {
                 attrs.push_str(&format!(r#" width="{w}" customWidth="1""#));
+            } else {
+                attrs.push_str(&format!(r#" width="{default_col_width}""#));
             }
             if let Some(&lvl) = sheet.col_outline.get(&col) {
                 attrs.push_str(&format!(r#" outlineLevel="{lvl}""#));
@@ -631,7 +639,7 @@ pub(super) fn worksheet_xml(
         if let Some(xf) = default_style_xf {
             if next_default_col <= MAX_COL {
                 let xml = format!(
-                    r#"<col min="{}" max="{}" style="{xf}"/>"#,
+                    r#"<col min="{}" max="{}" style="{xf}" width="{default_col_width}"/>"#,
                     next_default_col + 1,
                     MAX_COL + 1
                 );

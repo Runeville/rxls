@@ -2657,6 +2657,142 @@ print('READ_DV_OK')
         assert_opens_in_openpyxl(&bytes, script, "FORMAT_PATHS_OK");
     }
 
+    fn written_columns(bytes: &[u8]) -> Vec<std::collections::BTreeMap<String, String>> {
+        let xml = part(bytes, "xl/worksheets/sheet1.xml");
+        let mut reader = quick_xml::Reader::from_str(&xml);
+        let mut columns = Vec::new();
+        loop {
+            match reader.read_event().unwrap() {
+                quick_xml::events::Event::Empty(element)
+                | quick_xml::events::Event::Start(element)
+                    if element.name().as_ref() == b"col" =>
+                {
+                    columns.push(
+                        element
+                            .attributes()
+                            .map(|attribute| {
+                                let attribute = attribute.unwrap();
+                                (
+                                    String::from_utf8(attribute.key.as_ref().to_vec()).unwrap(),
+                                    String::from_utf8(attribute.value.to_vec()).unwrap(),
+                                )
+                            })
+                            .collect(),
+                    );
+                }
+                quick_xml::events::Event::Eof => break,
+                _ => {}
+            }
+        }
+        columns
+    }
+
+    #[test]
+    fn issue94_open_to_write_keeps_columns_visible() {
+        for populated in [false, true] {
+            let mut workbook = Workbook::new();
+            workbook.sheets.push(Sheet::new("Hello"));
+            if populated {
+                workbook.sheets[0].write(0, 0, "Hello");
+            }
+            let mut bytes = workbook.to_xlsx();
+            for _ in 0..2 {
+                let reopened = Workbook::open(&bytes).unwrap();
+                bytes = reopened.to_xlsx();
+                let columns = written_columns(&bytes);
+                assert!(
+                    !columns.is_empty(),
+                    "the imported default style is retained"
+                );
+                for column in columns {
+                    let width = column.get("width").and_then(|s| s.parse::<f32>().ok());
+                    assert!(
+                        width.is_some_and(|w| w > 0.0),
+                        "issue #94: a default-style column must not collapse in Excel: {column:?}"
+                    );
+                    assert_ne!(column.get("hidden").map(String::as_str), Some("1"));
+                }
+                let reopened = Workbook::open(&bytes).unwrap();
+                assert_eq!(reopened.sheets[0].name, "Hello");
+                if populated {
+                    assert_eq!(
+                        reopened.sheets[0].cell(0, 0).and_then(Cell::get_string),
+                        Some("Hello")
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn issue94_column_defaults_preserve_explicit_widths_and_formats() {
+        let mut workbook = Workbook::new();
+        let sheet = workbook.add_sheet("defaults");
+        sheet.set_default_format(&Format::new().set_bold());
+        sheet.set_default_col_width(12.0);
+        sheet.set_col_width(1, 22.0);
+        sheet.set_col_format(2, &Format::new().set_italic());
+        sheet.hide_column(3);
+        sheet.group_cols(4, 5, 1);
+        sheet.set_col_width(6, 0.0);
+        sheet.set_row_format(1, &Format::new().set_num_format("0.00"));
+        sheet.write(0, 0, "base");
+        sheet.write(1, 0, 12.5);
+        sheet.write(0, 2, "column");
+        sheet.write_with_format(0, 1, "explicit", &Format::new().set_italic());
+
+        let bytes = workbook.to_xlsx();
+        let columns = written_columns(&bytes);
+        assert_eq!(columns.len(), 8);
+        for column in &columns {
+            let first: u16 = column["min"].parse().unwrap();
+            let expected = match first {
+                2 => "22",
+                7 => "0",
+                _ => "12",
+            };
+            assert_eq!(
+                column.get("width").map(String::as_str),
+                Some(expected),
+                "{column:?}"
+            );
+        }
+        assert_eq!(columns[3].get("hidden").map(String::as_str), Some("1"));
+        assert_eq!(
+            columns[4].get("outlineLevel").map(String::as_str),
+            Some("1")
+        );
+        assert_eq!(
+            columns[5].get("outlineLevel").map(String::as_str),
+            Some("1")
+        );
+        let script = "import sys\nfrom openpyxl import load_workbook\nw=load_workbook(sys.argv[1]); s=w.active\nassert s['A1'].font.bold\nassert s['A2'].font.bold and s['A2'].number_format == '0.00'\nassert s['B1'].font.bold and s['B1'].font.italic\nassert s['C1'].font.bold and s['C1'].font.italic\nassert s.column_dimensions['A'].width == 12\nassert s.column_dimensions['B'].width == 22\nassert s.column_dimensions['D'].hidden\nprint('ISSUE94_FORMATS_OK')\n";
+        assert_opens_in_openpyxl(&bytes, script, "ISSUE94_FORMATS_OK");
+    }
+
+    #[test]
+    fn issue94_metadata_only_columns_receive_default_width() {
+        let mut workbook = Workbook::new();
+        let sheet = workbook.add_sheet("metadata");
+        sheet.set_default_col_width(20.0);
+        sheet.set_col_format(0, &Format::new().set_bold());
+        sheet.hide_column(1);
+        sheet.group_cols(2, 3, 1);
+        let columns = written_columns(&workbook.to_xlsx());
+        assert_eq!(columns.len(), 4);
+        for column in columns {
+            assert_eq!(
+                column.get("width").map(String::as_str),
+                Some("20"),
+                "{column:?}"
+            );
+            assert!(
+                !column.contains_key("customWidth"),
+                "inherited width is not custom"
+            );
+        }
+    }
+
     #[test]
     fn worksheet_default_format_opens_in_openpyxl() {
         let mut wb = Workbook::new();
