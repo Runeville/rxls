@@ -87,6 +87,17 @@ pub enum Revision {
     },
 }
 
+impl Revision {
+    /// Gets rId of revision if revision has it
+    pub fn id(&self) -> Option<usize> {
+        match self {
+            Revision::RowColumn { rid, .. } => Some(*rid),
+            Revision::CellChange { rid, .. } => Some(*rid),
+            Revision::Formatting { .. } => None,
+        }
+    }
+}
+
 /// One revision log
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
