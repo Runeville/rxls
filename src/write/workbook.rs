@@ -6,7 +6,8 @@ use crate::write::xml::{
     abs_col, abs_ref, esc_attr, esc_text, CT_CORE_PROPS, CT_EXT_PROPS, CT_RELS,
     CT_REVISION_HEADERS, CT_REVISION_LOG, CT_SST, CT_STYLES, CT_USER_NAMES, CT_VML, CT_WORKBOOK,
     CT_WORKSHEET, NS_CT, NS_MAIN, NS_PKG_REL, NS_R, REL_CORE_PROPS, REL_EXT_PROPS,
-    REL_OFFICE_DOCUMENT, REL_SST, REL_STYLES, REL_WORKSHEET, XML_DECL,
+    REL_OFFICE_DOCUMENT, REL_REVISION_HEADERS, REL_SST, REL_STYLES, REL_USER_NAMES, REL_WORKSHEET,
+    XML_DECL,
 };
 use crate::write::{MAX_COL, MAX_ROW, MAX_SHEETS};
 use crate::Workbook;
@@ -402,7 +403,7 @@ pub(super) fn workbook_xml_with_budget(wb: &Workbook, budget: &mut usize) -> Str
     s
 }
 
-pub(super) fn workbook_rels(n_sheets: usize) -> String {
+pub(super) fn workbook_rels(n_sheets: usize, has_revisions: bool) -> String {
     let mut s = String::new();
     s.push_str(XML_DECL);
     s.push_str(&format!(r#"<Relationships xmlns="{NS_PKG_REL}">"#));
@@ -422,6 +423,17 @@ pub(super) fn workbook_rels(n_sheets: usize) -> String {
         r#"<Relationship Id="rId{}" Type="{REL_SST}" Target="sharedStrings.xml"/>"#,
         n_sheets + 2
     ));
+
+    if has_revisions {
+        s.push_str(&format!(
+            r#"<Relationship Id="rId{}" Type="{REL_REVISION_HEADERS}" Target="styles.xml"/>"#,
+            n_sheets + 3
+        ));
+        s.push_str(&format!(
+            r#"<Relationship Id="rId{}" Type="{REL_USER_NAMES}" Target="styles.xml"/>"#,
+            n_sheets + 4
+        ));
+    }
     s.push_str("</Relationships>");
     s
 }

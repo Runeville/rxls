@@ -159,7 +159,7 @@ pub(crate) fn to_xlsx(wb: &Workbook) -> Vec<u8> {
         ),
         (
             "xl/_rels/workbook.xml.rels".into(),
-            workbook_rels(sheet_count).into_bytes(),
+            workbook_rels(sheet_count, wb.revision_logs.is_some()).into_bytes(),
         ),
         ("xl/styles.xml".into(), styles.to_xml().into_bytes()),
         (
