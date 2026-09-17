@@ -7,3 +7,7 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
 pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
     todo!()
 }
+
+pub(super) fn revisions_user_names_xml(revision_logs: &[RevisionLog]) -> String {
+    todo!()
+}

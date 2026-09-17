@@ -89,6 +89,8 @@ pub struct Workbook {
     pub sheets: Vec<Sheet>,
     /// Shared workbook revisions. Absent if workbook is not shared.
     pub revision_logs: Option<Vec<RevisionLog>>,
+    /// Shared workbook user_names
+    pub user_names: Option<Vec<String>>,
     /// `true` if the workbook uses the 1904 date system (Mac Excel), which shifts
     /// how [`crate::Cell::Date`] serials map to calendar dates.
     pub date1904: bool,
