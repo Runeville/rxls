@@ -426,11 +426,11 @@ pub(super) fn workbook_rels(n_sheets: usize, has_revisions: bool) -> String {
 
     if has_revisions {
         s.push_str(&format!(
-            r#"<Relationship Id="rId{}" Type="{REL_REVISION_HEADERS}" Target="styles.xml"/>"#,
+            r#"<Relationship Id="rId{}" Type="{REL_REVISION_HEADERS}" Target="revisions/revisionHeaders.xml"/>"#,
             n_sheets + 3
         ));
         s.push_str(&format!(
-            r#"<Relationship Id="rId{}" Type="{REL_USER_NAMES}" Target="styles.xml"/>"#,
+            r#"<Relationship Id="rId{}" Type="{REL_USER_NAMES}" Target="revisions/userNames.xml"/>"#,
             n_sheets + 4
         ));
     }
