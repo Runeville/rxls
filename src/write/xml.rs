@@ -43,6 +43,10 @@ pub(super) const REL_STYLES: &str =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles";
 pub(super) const REL_SST: &str =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings";
+pub(super) const REL_REVISION_HEADERS: &str =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/revisionHeaders";
+pub(super) const REL_USER_NAMES: &str =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/usernames";
 pub(crate) const REL_HYPERLINK: &str =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink";
 pub(super) const REL_DRAWING: &str =
