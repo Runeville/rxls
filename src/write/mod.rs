@@ -37,7 +37,9 @@ pub(crate) use crate::write::comment::{
     vml_drawing_xml_for_comments as editable_vml_drawing_xml,
 };
 use crate::write::drawing::build_drawings_with_budget;
-use crate::write::revision::{revision_headers_xml, revision_log_xml, revisions_user_names_xml};
+use crate::write::revision::{
+    revision_headers_rels, revision_headers_xml, revision_log_xml, revisions_user_names_xml,
+};
 use crate::write::styles::StyleTable;
 use crate::write::table::{table_name, table_xml};
 use crate::write::workbook::{
@@ -188,6 +190,11 @@ pub(crate) fn to_xlsx(wb: &Workbook) -> Vec<u8> {
                 revision_log_xml(revision_log).into_bytes(),
             ));
         }
+
+        parts.push((
+            "xl/revisions/__rels/revisionHeaders.xml.rels".into(),
+            revision_headers_rels(revision_logs.len()).into_bytes(),
+        ));
     }
     for (i, sx) in sheet_xmls.into_iter().enumerate() {
         parts.push((format!("xl/worksheets/sheet{}.xml", i + 1), sx.into_bytes()));
