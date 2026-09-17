@@ -8,6 +8,9 @@ pub(crate) const NS_MAIN: &str = "http://schemas.openxmlformats.org/spreadsheetm
 pub(crate) const NS_R: &str = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 pub(super) const NS_CT: &str = "http://schemas.openxmlformats.org/package/2006/content-types";
 pub(super) const NS_PKG_REL: &str = "http://schemas.openxmlformats.org/package/2006/relationships";
+pub(super) const NS_MC: &str =
+    "http://schemas.openxmlformats.org/markup-compatibility/2006";
+pub(super) const NS_AC: &str = "http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac";
 
 // Crate-visible (not just `pub(super)`): `crate::package` reuses these exact
 // SpreadsheetML content-type URIs when validating/authoring `[Content_Types].xml`
