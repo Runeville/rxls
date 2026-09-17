@@ -1,5 +1,5 @@
 use crate::write::xml::{NS_AC, NS_MAIN, NS_MC, NS_PKG_REL, NS_R, REL_REVISION_LOG, XML_DECL};
-use crate::RevisionLog;
+use crate::{Cell, Revision, RevisionChange, RevisionLog};
 
 pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
     let mut s = String::new();
@@ -32,8 +32,42 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
     s
 }
 
+#[allow(clippy::single_match)]
 pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
-    todo!()
+    let mut s = String::new();
+    s.push_str(XML_DECL);
+    s.push_str(&format!(r#"<revisions xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac">"#));
+
+    for revision in revision_log.revisions.clone() {
+        match revision {
+            Revision::CellChange { rid, sid, changes } => {
+                s.push_str(&format!(r#"<rcc rId="{}" sId="{}">"#, rid, sid));
+                for change in changes {
+                    match change {
+                        RevisionChange::NewCell { address, value } => {
+                            s.push_str(&format!(r#"<nc r="{}">"#, address));
+                            match value {
+                                Cell::Text(text) => {
+                                    s.push_str(&format!("<v>{}</v>", text));
+                                }
+                                Cell::Formula { formula, .. } => {
+                                    s.push_str(&format!("<f>{}</f>", formula));
+                                }
+                                _ => {}
+                            }
+                            s.push_str("</nc>");
+                        }
+                        _ => {}
+                    }
+                }
+                s.push_str("</rcc>");
+            }
+            _ => {}
+        }
+    }
+
+    s.push_str("</revisions>");
+    s
 }
 
 pub(super) fn revisions_user_names_xml(revision_logs: &[RevisionLog]) -> String {
