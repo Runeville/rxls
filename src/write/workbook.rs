@@ -3,9 +3,10 @@
 
 use crate::write::drawing::Drawings;
 use crate::write::xml::{
-    abs_col, abs_ref, esc_attr, esc_text, CT_CORE_PROPS, CT_EXT_PROPS, CT_RELS, CT_SST, CT_STYLES,
-    CT_VML, CT_WORKBOOK, CT_WORKSHEET, NS_CT, NS_MAIN, NS_PKG_REL, NS_R, REL_CORE_PROPS,
-    REL_EXT_PROPS, REL_OFFICE_DOCUMENT, REL_SST, REL_STYLES, REL_WORKSHEET, XML_DECL,
+    abs_col, abs_ref, esc_attr, esc_text, CT_CORE_PROPS, CT_EXT_PROPS, CT_RELS,
+    CT_REVISION_HEADERS, CT_REVISION_LOG, CT_SST, CT_STYLES, CT_USER_NAMES, CT_VML, CT_WORKBOOK,
+    CT_WORKSHEET, NS_CT, NS_MAIN, NS_PKG_REL, NS_R, REL_CORE_PROPS, REL_EXT_PROPS,
+    REL_OFFICE_DOCUMENT, REL_SST, REL_STYLES, REL_WORKSHEET, XML_DECL,
 };
 use crate::write::{MAX_COL, MAX_ROW, MAX_SHEETS};
 use crate::Workbook;
@@ -98,7 +99,11 @@ pub(super) fn sanitize_sheet_names(wb: &Workbook) -> Vec<String> {
     out
 }
 
-pub(super) fn content_types(n_sheets: usize, drawings: &Drawings) -> String {
+pub(super) fn content_types(
+    n_sheets: usize,
+    drawings: &Drawings,
+    n_revision_logs: usize,
+) -> String {
     let mut s = String::new();
     s.push_str(XML_DECL);
     s.push_str(&format!(r#"<Types xmlns="{NS_CT}">"#));
@@ -131,9 +136,23 @@ pub(super) fn content_types(n_sheets: usize, drawings: &Drawings) -> String {
     s.push_str(&format!(
         r#"<Override PartName="/xl/sharedStrings.xml" ContentType="{CT_SST}"/>"#
     ));
+    if n_revision_logs != 0 {
+        s.push_str(&format!(
+            r#"<Override PartName="/xl/revisions/revisionHeaders.xml" ContentType="{CT_REVISION_HEADERS}"/>"#
+        ));
+        s.push_str(&format!(
+            r#"<Override PartName="/xl/revisions/userNames.xml" ContentType="{CT_USER_NAMES}"/>"#
+        ));
+    }
     s.push_str(&format!(
         r#"<Override PartName="/docProps/core.xml" ContentType="{CT_CORE_PROPS}"/><Override PartName="/docProps/app.xml" ContentType="{CT_EXT_PROPS}"/>"#
     ));
+    for i in 0..n_revision_logs {
+        s.push_str(&format!(
+            r#"<Override PartName="/xl/revisions/revisionLog{}.xml" ContentType="{CT_REVISION_LOG}"/>"#,
+            i + 1
+        ));
+    }
     for (part, ct) in &drawings.ct_overrides {
         s.push_str(&format!(
             r#"<Override PartName="{part}" ContentType="{ct}"/>"#

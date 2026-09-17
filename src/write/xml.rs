@@ -21,6 +21,12 @@ pub(crate) const CT_STYLES: &str =
     "application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml";
 pub(crate) const CT_SST: &str =
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml";
+pub(crate) const CT_REVISION_HEADERS: &str =
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.revisionHeaders+xml";
+pub(crate) const CT_USER_NAMES: &str =
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.userNames+xml";
+pub(crate) const CT_REVISION_LOG: &str =
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.revisionLog+xml";
 
 pub(super) const REL_OFFICE_DOCUMENT: &str =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument";

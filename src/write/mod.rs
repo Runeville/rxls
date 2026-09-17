@@ -137,7 +137,12 @@ pub(crate) fn to_xlsx(wb: &Workbook) -> Vec<u8> {
     let mut parts: Vec<(String, Vec<u8>)> = vec![
         (
             "[Content_Types].xml".into(),
-            content_types(sheet_count, &drawings).into_bytes(),
+            content_types(
+                sheet_count,
+                &drawings,
+                wb.revision_logs.as_ref().map(|l| l.len()).unwrap_or(0),
+            )
+            .into_bytes(),
         ),
         ("_rels/.rels".into(), root_rels().into_bytes()),
         (
