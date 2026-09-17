@@ -13,7 +13,7 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
             .unwrap_or_default();
 
         s.push_str(&format!(
-            r#"<header guid={} dateTime="{}" maxSheetId="{}" userName="{}" r:id="{} minRId="{}">"#,
+            r#"<header guid="{{{}}}" dateTime="{}" maxSheetId="{}" userName="{}" r:id="{}" minRId="{}">"#,
             revision_log.guid,
             revision_log.date_time,
             "todo",
@@ -21,7 +21,7 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
             revision_log.revision_log_id,
             revision_log.min_rid.unwrap_or_default()
         ));
-        s.push_str(&format!(r#"<sheetIdMap count="{}"/>"#, max_sheet_id));
+        s.push_str(&format!(r#"<sheetIdMap count="{}">"#, max_sheet_id));
         for i in 1..=max_sheet_id {
             s.push_str(&format!(r#"<sheetId val="{}"/>"#, i));
         }
