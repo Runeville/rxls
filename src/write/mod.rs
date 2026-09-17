@@ -37,7 +37,7 @@ pub(crate) use crate::write::comment::{
     vml_drawing_xml_for_comments as editable_vml_drawing_xml,
 };
 use crate::write::drawing::build_drawings_with_budget;
-use crate::write::revision::{revision_headers_xml, revision_log_xml};
+use crate::write::revision::{revision_headers_xml, revision_log_xml, revisions_user_names_xml};
 use crate::write::styles::StyleTable;
 use crate::write::table::{table_name, table_xml};
 use crate::write::workbook::{
@@ -167,10 +167,16 @@ pub(crate) fn to_xlsx(wb: &Workbook) -> Vec<u8> {
             shared_strings_xml(&sst, sst_count).into_bytes(),
         ),
     ];
+    // Gather revision parts
     if let Some(revision_logs) = &wb.revision_logs {
         parts.push((
             "xl/revisions/revisionHeaders.xml".into(),
             revision_headers_xml(revision_logs).into_bytes(),
+        ));
+
+        parts.push((
+            "xl/revisions/userNames.xml".into(),
+            revisions_user_names_xml(revision_logs).into_bytes(),
         ));
 
         for revision_log in revision_logs {
