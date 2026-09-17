@@ -45,6 +45,8 @@ pub(super) const REL_SST: &str =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings";
 pub(super) const REL_REVISION_HEADERS: &str =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/revisionHeaders";
+pub(super) const REL_REVISION_LOG: &str =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/revisionLog";
 pub(super) const REL_USER_NAMES: &str =
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/usernames";
 pub(crate) const REL_HYPERLINK: &str =
