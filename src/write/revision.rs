@@ -36,7 +36,9 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
 pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
     let mut s = String::new();
     s.push_str(XML_DECL);
-    s.push_str(&format!(r#"<revisions xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac">"#));
+    let empty_log = revision_log.revisions.is_empty();
+
+    s.push_str(&format!(r#"<revisions xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac"{}>"#, if empty_log { "/" } else { "" }));
 
     for revision in revision_log.revisions.clone() {
         match revision {
@@ -66,7 +68,9 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
         }
     }
 
-    s.push_str("</revisions>");
+    if !empty_log {
+        s.push_str("</revisions>");
+    }
     s
 }
 
