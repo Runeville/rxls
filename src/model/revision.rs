@@ -96,6 +96,15 @@ impl Revision {
             Revision::Formatting { .. } => None,
         }
     }
+
+    /// Gets sId if revision has it
+    pub fn sid(&self) -> Option<usize> {
+        match self {
+            Revision::RowColumn { sid, .. } => Some(*sid),
+            Revision::CellChange { sid, .. } => Some(*sid),
+            Revision::Formatting { .. } => None,
+        }
+    }
 }
 
 /// One revision log
