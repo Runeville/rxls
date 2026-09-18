@@ -4,6 +4,8 @@ use crate::{Cell, Revision, RevisionChange, RevisionLog};
 pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
     let mut s = String::new();
     s.push_str(XML_DECL);
+    s.push_str(&format!(r#"<headers xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" guid="{{{}}}" diskRevisions="1" revisionId="{}" version="3">"#, revision_logs.last().unwrap().guid, revision_logs.len()));
+
     for revision_log in revision_logs {
         let max_sheet_id = revision_log
             .revisions
@@ -28,6 +30,8 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
         s.push_str("</sheetIdMap>");
         s.push_str("</header>");
     }
+
+    s.push_str("</headers>");
 
     s
 }
