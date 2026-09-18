@@ -192,7 +192,7 @@ pub(crate) fn to_xlsx(wb: &Workbook) -> Vec<u8> {
         }
 
         parts.push((
-            "xl/revisions/__rels/revisionHeaders.xml.rels".into(),
+            "xl/revisions/_rels/revisionHeaders.xml.rels".into(),
             revision_headers_rels(revision_logs.len()).into_bytes(),
         ));
     }
