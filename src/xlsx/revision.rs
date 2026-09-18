@@ -145,7 +145,10 @@ pub(super) fn parse_revision_headers(xml: &str) -> ParsedRevisionHeaders {
             Ok(Event::Start(e)) => match local(e.name().as_ref()) {
                 b"header" => {
                     current_header = Some(RevisionRef {
-                        guid: attr(&e, b"guid").unwrap_or_default(),
+                        guid: attr(&e, b"guid")
+                            .unwrap_or_default()
+                            .trim_matches(['{', '}'])
+                            .to_string(),
                         date_time: attr(&e, b"dateTime").unwrap_or_default(),
                         user_name: attr(&e, b"userName").unwrap_or_default(),
                         rid: attr(&e, b"id").unwrap_or_default(),
@@ -171,7 +174,10 @@ pub(super) fn parse_revision_headers(xml: &str) -> ParsedRevisionHeaders {
             Ok(Event::Empty(e)) => match local(e.name().as_ref()) {
                 b"header" => {
                     revisions.push(RevisionRef {
-                        guid: attr(&e, b"guid").unwrap_or_default(),
+                        guid: attr(&e, b"guid")
+                            .unwrap_or_default()
+                            .trim_matches(['{', '}'])
+                            .to_string(),
                         date_time: attr(&e, b"dateTime").unwrap_or_default(),
                         user_name: attr(&e, b"userName").unwrap_or_default(),
                         rid: attr(&e, b"id").unwrap_or_default(),
