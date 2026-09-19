@@ -17,7 +17,7 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
             revision_log.user_name,
             revision_log.revision_log_id,
             revision_log
-                .min_rid
+                .min_rid()
                 .map(|id| format!(r#"minRId="{id}""#))
                 .unwrap_or_default(),
             revision_log

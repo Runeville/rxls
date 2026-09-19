@@ -361,7 +361,6 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
     RevisionLog {
         guid: revision_ref.guid.clone(),
         date_time: revision_ref.date_time.clone(),
-        min_rid: revision_ref.min_rid,
         revision_log_id: revision_ref.rid.clone(),
         user_name: revision_ref.user_name.clone(),
         revisions,
