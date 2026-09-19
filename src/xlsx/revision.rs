@@ -199,7 +199,6 @@ pub(super) fn parse_revision_headers(xml: &str) -> ParsedRevisionHeaders {
 
                 _ => {}
             },
-
             Ok(Event::End(e)) => {
                 if local(e.name().as_ref()) == b"header" {
                     if let Some(header) = current_header.take() {

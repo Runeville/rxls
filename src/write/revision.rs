@@ -18,13 +18,13 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
             r#"<header guid="{{{}}}" dateTime="{}" maxSheetId="{}" userName="{}" r:id="{}" minRId="{}">"#,
             revision_log.guid,
             revision_log.date_time,
-            max_sheet_id,
+            max_sheet_id + 1,
             revision_log.user_name,
             revision_log.revision_log_id,
             revision_log.min_rid.unwrap_or_default()
         ));
         s.push_str(&format!(r#"<sheetIdMap count="{}">"#, max_sheet_id));
-        for i in 1..=max_sheet_id {
+        for i in 1..=revision_log.n_sheets {
             s.push_str(&format!(r#"<sheetId val="{}"/>"#, i));
         }
         s.push_str("</sheetIdMap>");
