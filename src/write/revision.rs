@@ -54,13 +54,20 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 for change in changes {
                     match change {
                         RevisionChange::NewCell { address, value } => {
-                            s.push_str(&format!(r#"<nc r="{}">"#, address));
                             match value {
                                 Cell::Text(text) => {
-                                    s.push_str(&format!("<v>{}</v>", text));
+                                    s.push_str(&format!(r#"<nc r="{}" t="inlineStr">"#, address));
+                                    s.push_str("<is>");
+                                    s.push_str(&format!("<t>{}</t>", text));
+                                    s.push_str("</is>");
                                 }
                                 Cell::Formula { formula, .. } => {
+                                    s.push_str(&format!(r#"<nc r="{}">"#, address));
                                     s.push_str(&format!("<f>{}</f>", formula));
+                                }
+                                Cell::Number(number) => {
+                                    s.push_str(&format!(r#"<nc r="{}">"#, address));
+                                    s.push_str(&format!("<v>{}</v>", number));
                                 }
                                 _ => {}
                             }
