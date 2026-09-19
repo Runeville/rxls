@@ -7,12 +7,7 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
     s.push_str(&format!(r#"<headers xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" guid="{{{}}}" diskRevisions="1" revisionId="{}" version="3">"#, revision_logs.last().unwrap().guid, revision_logs.len()));
 
     for revision_log in revision_logs {
-        let max_sheet_id = revision_log
-            .revisions
-            .iter()
-            .map(|r| r.sid().unwrap_or_default())
-            .max()
-            .unwrap_or_default();
+        let max_sheet_id = revision_log.n_sheets + 1;
 
         s.push_str(&format!(
             r#"<header guid="{{{}}}" dateTime="{}" maxSheetId="{}" userName="{}" r:id="{}" minRId="{}">"#,
