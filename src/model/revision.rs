@@ -123,9 +123,21 @@ pub struct RevisionLog {
     pub date_time: String,
     /// Revision log's min rid
     pub min_rid: Option<usize>,
-    /// Revision log's max rid
-    pub max_rid: Option<usize>,
     /// Number of sheets that are affected by this revision log (or just exist while revision log
     /// was taken)
     pub n_sheets: usize,
+}
+
+impl RevisionLog {
+    /// Gets max revision id of revision log
+    pub fn max_rid(&self) -> Option<usize> {
+        let max_rid = self
+            .revisions
+            .iter()
+            .map(|r| r.id())
+            .max()
+            .unwrap_or_default();
+
+        max_rid
+    }
 }

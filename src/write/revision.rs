@@ -8,12 +8,6 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
 
     for revision_log in revision_logs {
         let max_sheet_id = revision_log.n_sheets + 1;
-        let max_rid = revision_log
-            .revisions
-            .iter()
-            .map(|r| r.id())
-            .max()
-            .unwrap_or_default();
 
         s.push_str(&format!(
             r#"<header guid="{{{}}}" dateTime="{}" maxSheetId="{}" userName="{}" r:id="{}" {} {}>"#,
@@ -26,7 +20,8 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
                 .min_rid
                 .map(|id| format!(r#"minRId="{id}""#))
                 .unwrap_or_default(),
-            max_rid
+            revision_log
+                .max_rid()
                 .map(|id| format!(r#"maxRId="{id}""#))
                 .unwrap_or_default()
         ));
