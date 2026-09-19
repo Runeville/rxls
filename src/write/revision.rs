@@ -13,7 +13,7 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
             r#"<header guid="{{{}}}" dateTime="{}" maxSheetId="{}" userName="{}" r:id="{}" {} {}>"#,
             revision_log.guid,
             revision_log.date_time,
-            max_sheet_id + 1,
+            max_sheet_id,
             revision_log.user_name,
             revision_log.revision_log_id,
             revision_log
