@@ -367,5 +367,6 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
         revision_log_id: revision_ref.rid.clone(),
         user_name: revision_ref.user_name.clone(),
         revisions,
+        n_sheets: revision_ref.sheet_ids.len(),
     }
 }
