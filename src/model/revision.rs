@@ -126,6 +126,6 @@ pub struct RevisionLog {
     /// Revision log's max rid
     pub max_rid: Option<usize>,
     /// Number of sheets that are affected by this revision log (or just exist while revision log
-    /// wat taken)
+    /// was taken)
     pub n_sheets: usize,
 }
