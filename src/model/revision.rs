@@ -121,8 +121,6 @@ pub struct RevisionLog {
     pub revisions: Vec<Revision>,
     /// Revision log's date/time
     pub date_time: String,
-    /// Revision log's min rid
-    pub min_rid: Option<usize>,
     /// Number of sheets that are affected by this revision log (or just exist while revision log
     /// was taken)
     pub n_sheets: usize,
@@ -139,5 +137,17 @@ impl RevisionLog {
             .unwrap_or_default();
 
         max_rid
+    }
+
+    /// Gets min revision id of revision log
+    pub fn min_rid(&self) -> Option<usize> {
+        let min_rid = self
+            .revisions
+            .iter()
+            .map(|r| r.id())
+            .min()
+            .unwrap_or_default();
+
+        min_rid
     }
 }
