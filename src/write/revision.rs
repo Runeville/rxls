@@ -23,7 +23,10 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
             revision_log.revision_log_id,
             revision_log.min_rid.unwrap_or_default()
         ));
-        s.push_str(&format!(r#"<sheetIdMap count="{}">"#, max_sheet_id));
+        s.push_str(&format!(
+            r#"<sheetIdMap count="{}">"#,
+            revision_log.n_sheets
+        ));
         for i in 1..=revision_log.n_sheets {
             s.push_str(&format!(r#"<sheetId val="{}"/>"#, i));
         }
