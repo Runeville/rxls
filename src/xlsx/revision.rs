@@ -232,7 +232,7 @@ pub(super) fn parse_revision_user_names(xml: &str) -> Vec<User> {
                         name: attr(&e, b"name").unwrap_or_default(),
                         id: attr(&e, b"id")
                             .unwrap_or_default()
-                            .parse::<u32>()
+                            .parse::<i32>()
                             .unwrap_or_default(),
                         datetime: attr(&e, b"dateTime").unwrap_or_default(),
                     });

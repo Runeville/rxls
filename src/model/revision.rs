@@ -171,7 +171,7 @@ pub struct User {
     /// name of the user
     pub name: String,
     /// id of the user session
-    pub id: u32,
+    pub id: i32,
     /// datetime of the user session
     pub datetime: String,
 }
