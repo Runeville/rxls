@@ -25,7 +25,9 @@ pub use cell::{
 };
 #[cfg(feature = "chrono")]
 pub use cell::{excel_serial_to_duration, excel_serial_to_naive_datetime};
-pub use revision::{Revision, RevisionChange, RevisionLog, RevisionRowColumnAction};
+pub use revision::{
+    Revision, RevisionChange, RevisionData, RevisionLog, RevisionRowColumnAction, User,
+};
 
 #[cfg(test)]
 use print::MAX_HEADER_FOOTER_BYTES;

@@ -50,7 +50,7 @@ pub(crate) use relationships::{
 use relationships::{
     OOXML_RELATIONSHIPS_NAMESPACE_STRICT, OOXML_RELATIONSHIPS_NAMESPACE_TRANSITIONAL,
 };
-use revision::{parse_revision, parse_revision_headers};
+use revision::{parse_revision, parse_revision_headers, parse_revision_user_names};
 use style::parse_styles;
 #[cfg(test)]
 use style::{
@@ -87,7 +87,7 @@ use crate::{
     Cell, CellStyle, DvKind, DvOp, PrintLossKind, PrintPageOrder, StyleLoss, StyleLossKind,
 };
 use crate::{
-    Color, DocProperties, FormatScript, Revision, RevisionLog, Sheet, SheetType, StyleFidelity,
+    Color, DocProperties, FormatScript, RevisionData, RevisionLog, Sheet, SheetType, StyleFidelity,
     Workbook,
 };
 
@@ -109,6 +109,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
     let workbook_rels_xml = part(&mut zip, &sheet_rels_path(&workbook_path)).unwrap_or_default();
     let workbook_relationships = parse_ooxml_relationships(&workbook_rels_xml);
     let workbook_revisions_headers_xml = part(&mut zip, "/xl/revisions/revisionHeaders.xml");
+    let workbook_revisions_user_names_xml = part(&mut zip, "/xl/revisions/userNames.xml");
     let shared_xml = match workbook_related_part(
         &mut zip,
         &workbook_path,
@@ -439,7 +440,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         });
     }
 
-    let revision_logs = if let Some(revision_headers_xml) = workbook_revisions_headers_xml {
+    let revision_data = if let Some(revision_headers_xml) = workbook_revisions_headers_xml {
         let parsed = parse_revision_headers(&revision_headers_xml);
         let mut revision_logs: Vec<RevisionLog> = Vec::with_capacity(parsed.revisions.len());
 
@@ -457,7 +458,17 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
             }
         }
 
-        Some(revision_logs)
+        let users = if let Some(user_names_xml) = workbook_revisions_user_names_xml {
+            parse_revision_user_names(&user_names_xml)
+        } else {
+            Vec::new()
+        };
+
+        let revision_data = RevisionData {
+            revision_logs,
+            users,
+        };
+        Some(revision_data)
     } else {
         None
     };
@@ -472,7 +483,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         properties,
         defined_names,
         local_defined_names,
-        revision_logs,
+        revision_data,
         ..Default::default()
     })
 }

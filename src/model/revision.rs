@@ -3,6 +3,16 @@ use serde::Serialize;
 
 use super::Cell;
 
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+/// All the data of revisions
+pub struct RevisionData {
+    /// All revisions logs
+    pub revision_logs: Vec<RevisionLog>,
+    /// All users sessions
+    pub users: Vec<User>,
+}
+
 /// Enum for `RevisionChangeEnum::RevisionRowColumn.action`
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
@@ -150,4 +160,18 @@ impl RevisionLog {
 
         min_rid
     }
+}
+
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+/// One user sessions stored in /xl/revisions/userNames.xml (exists if workbook is shared)
+pub struct User {
+    /// guid of last synced RevisionLog
+    pub guid: String,
+    /// name of the user
+    pub name: String,
+    /// id of the user session
+    pub id: u32,
+    /// datetime of the user session
+    pub datetime: String,
 }

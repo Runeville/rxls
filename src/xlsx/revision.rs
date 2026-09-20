@@ -2,7 +2,7 @@ use quick_xml::events::Event;
 use quick_xml::Reader;
 
 use super::{attr, local, text_of};
-use crate::{Cell, Revision, RevisionChange, RevisionLog, RevisionRowColumnAction};
+use crate::{Cell, Revision, RevisionChange, RevisionLog, RevisionRowColumnAction, User};
 
 #[derive(PartialEq)]
 enum ParserState {
@@ -214,6 +214,30 @@ pub(super) fn parse_revision_headers(xml: &str) -> ParsedRevisionHeaders {
     }
 
     ParsedRevisionHeaders { revisions }
+}
+
+pub(super) fn parse_revision_user_names(xml: &str) -> Vec<User> {
+    let mut r = Reader::from_str(xml);
+    let mut users: Vec<User> = Vec::new();
+
+    loop {
+        if let Ok(Event::Empty(e)) = r.read_event() {
+            if local(e.name().as_ref()) == b"userInfo" {
+                users.push(User {
+                    guid: attr(&e, b"guid")
+                        .unwrap_or_default()
+                        .trim_matches(['{', '}'])
+                        .to_string(),
+                    name: attr(&e, b"name").unwrap_or_default(),
+                    id: attr(&e, b"id")
+                        .unwrap_or_default()
+                        .parse::<u32>()
+                        .unwrap_or_default(),
+                    datetime: attr(&e, b"dateTime").unwrap_or_default(),
+                });
+            }
+        }
+    }
 }
 
 pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionLog {
