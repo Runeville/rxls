@@ -142,7 +142,10 @@ pub(crate) fn to_xlsx(wb: &Workbook) -> Vec<u8> {
             content_types(
                 sheet_count,
                 &drawings,
-                wb.revision_logs.as_ref().map(|l| l.len()).unwrap_or(0),
+                wb.revision_data
+                    .as_ref()
+                    .map(|rd| rd.revision_logs.len())
+                    .unwrap_or_default(),
             )
             .into_bytes(),
         ),
@@ -161,7 +164,7 @@ pub(crate) fn to_xlsx(wb: &Workbook) -> Vec<u8> {
         ),
         (
             "xl/_rels/workbook.xml.rels".into(),
-            workbook_rels(sheet_count, wb.revision_logs.is_some()).into_bytes(),
+            workbook_rels(sheet_count, wb.revision_data.is_some()).into_bytes(),
         ),
         ("xl/styles.xml".into(), styles.to_xml().into_bytes()),
         (
@@ -170,7 +173,8 @@ pub(crate) fn to_xlsx(wb: &Workbook) -> Vec<u8> {
         ),
     ];
     // Gather revision parts
-    if let Some(revision_logs) = &wb.revision_logs {
+    if let Some(revision_data) = &wb.revision_data {
+        let revision_logs = &revision_data.revision_logs;
         parts.push((
             "xl/revisions/revisionHeaders.xml".into(),
             revision_headers_xml(revision_logs).into_bytes(),
@@ -178,7 +182,7 @@ pub(crate) fn to_xlsx(wb: &Workbook) -> Vec<u8> {
 
         parts.push((
             "xl/revisions/userNames.xml".into(),
-            revisions_user_names_xml(revision_logs).into_bytes(),
+            revisions_user_names_xml(&revision_data.users).into_bytes(),
         ));
 
         for revision_log in revision_logs {

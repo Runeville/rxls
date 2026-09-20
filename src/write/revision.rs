@@ -1,5 +1,5 @@
 use crate::write::xml::{NS_AC, NS_MAIN, NS_MC, NS_PKG_REL, NS_R, REL_REVISION_LOG, XML_DECL};
-use crate::{Cell, Revision, RevisionChange, RevisionLog};
+use crate::{Cell, Revision, RevisionChange, RevisionLog, User};
 
 pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
     let mut s = String::new();
@@ -90,12 +90,30 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
     s
 }
 
-pub(super) fn revisions_user_names_xml(revision_logs: &[RevisionLog]) -> String {
+pub(super) fn revisions_user_names_xml(users: &[User]) -> String {
     let mut s = String::new();
     s.push_str(XML_DECL);
-    s.push_str(&format!(
+
+    if users.is_empty() {
+        s.push_str(&format!(
         r#"<users xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" count="0"/>"#
     ));
+        return s;
+    }
+
+    s.push_str(&format!(
+        r#"<users xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" count="{}">"#,
+        users.len()
+    ));
+
+    for user in users {
+        s.push_str(&format!(
+            r#"<userInfo guid="{{{}}}" name="{}" id="{}" dateTime="{}"/>"#,
+            user.guid, user.name, user.id, user.datetime
+        ));
+    }
+    s.push_str("</users>");
+
     s
 }
 
