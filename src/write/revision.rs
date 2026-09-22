@@ -69,7 +69,11 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                         r#"<rrc rId="{rid}" sId="{sid}" action="{action}" ref="{address}" eol="{}"/>"#, if eol { "1" } else { "0" }
                     ));
                 } else {
-                    todo!()
+                    s.push_str(&format!(
+                        r#"<rrc rId="{rid}" sId="{sid}" action="{action}" ref="{address}" eol="{}">"#, if eol { "1" } else { "0" }
+                    ));
+                    push_changes(&mut s, &changes);
+                    s.push_str("</rrc>");
                 }
             }
             Revision::RevisionView { guid, action } => {
