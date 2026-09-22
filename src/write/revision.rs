@@ -97,7 +97,10 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 }
             }
             Revision::RevisionView { guid, action } => {
-                s.push_str(&format!(r#"<rcv guid="{{{}}} action="{}"/>""#, guid, action));
+                s.push_str(&format!(
+                    r#"<rcv guid="{{{}}} action="{}"/>""#,
+                    guid, action
+                ));
             }
             _ => {}
         }
