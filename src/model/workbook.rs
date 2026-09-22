@@ -1,6 +1,6 @@
 use super::{
-    Dimensions, FormulaRange, HeaderRow, ImageFmt, Picture, Range, RevisionData, RevisionLog,
-    Sheet, SheetMetadata, Table, User, WorksheetMetadata,
+    Dimensions, FormulaRange, HeaderRow, ImageFmt, Picture, Range, RevisionData, Sheet,
+    SheetMetadata, Table, User, WorksheetMetadata,
 };
 
 /// Public workbook-level metadata.
