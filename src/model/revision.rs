@@ -74,6 +74,8 @@ pub enum Revision {
         address: String,
         /// Changes
         changes: Vec<RevisionChange>,
+        /// End of list
+        eol: bool,
     },
     /// Change cell
     CellChange {

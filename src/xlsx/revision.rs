@@ -75,6 +75,8 @@ enum RevisionBuilder {
         address: String,
         /// Changes
         changes: Vec<RevisionChangeBuilder>,
+        /// End of list
+        eol: bool,
     },
     /// Change cell
     CellChange {
@@ -94,12 +96,14 @@ impl RevisionBuilder {
                 rid,
                 sid,
                 changes,
+                eol,
             } => Some(Revision::RowColumn {
                 rid,
                 sid,
                 action,
                 address,
                 changes: changes.into_iter().filter_map(|c| c.build()).collect(),
+                eol,
             }),
 
             RevisionBuilder::CellChange { rid, sid, changes } => Some(Revision::CellChange {
@@ -330,6 +334,9 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                             sid,
                             action,
                             changes: Vec::new(),
+                            eol: attr(&e, b"eol")
+                                .map(|v| v == "1" || v == "true")
+                                .unwrap_or(false),
                         });
                     }
                 }
