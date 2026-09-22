@@ -8,6 +8,8 @@ use crate::{Cell, Revision, RevisionChange, RevisionLog, RevisionRowColumnAction
 enum ParserState {
     /// Value <v>
     V,
+    /// Text <t>
+    T,
     /// Formula <f>
     F,
 }
@@ -286,8 +288,11 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     changes_stack.push(change);
                 }
 
-                b"v" | b"t" => {
+                b"v" => {
                     parser_state = Some(ParserState::V);
+                }
+                b"t" => {
+                    parser_state = Some(ParserState::T);
                 }
                 b"f" => {
                     parser_state = Some(ParserState::F);
@@ -337,6 +342,17 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     if let Some(current_change) = &mut changes_stack.last_mut() {
                         match state {
                             ParserState::V => {
+                                if let RevisionChangeBuilder::NewCell { value, .. } = current_change
+                                {
+                                    let new_value = text_of(&e);
+                                    if let Ok(new_value) = new_value.parse::<f64>() {
+                                        *value = Some(Cell::Number(new_value));
+                                    } else {
+                                        *value = Some(Cell::Text(new_value));
+                                    }
+                                }
+                            }
+                            ParserState::T => {
                                 if let RevisionChangeBuilder::NewCell { value, .. } = current_change
                                 {
                                     *value = Some(Cell::Text(text_of(&e)));
