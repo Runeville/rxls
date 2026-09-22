@@ -2,7 +2,9 @@ use quick_xml::events::Event;
 use quick_xml::Reader;
 
 use super::{attr, local, text_of};
-use crate::{Cell, Revision, RevisionChange, RevisionLog, RevisionRowColumnAction, User};
+use crate::{
+    Cell, Revision, RevisionChange, RevisionLog, RevisionRowColumnAction, RevisionViewAction, User,
+};
 
 #[derive(PartialEq)]
 enum ParserState {
@@ -85,6 +87,10 @@ enum RevisionBuilder {
         /// Changes
         changes: Vec<RevisionChangeBuilder>,
     },
+    RevisionView {
+        guid: String,
+        action: RevisionViewAction,
+    },
 }
 
 impl RevisionBuilder {
@@ -111,6 +117,9 @@ impl RevisionBuilder {
                 sid,
                 changes: changes.into_iter().filter_map(|c| c.build()).collect(),
             }),
+            RevisionBuilder::RevisionView { guid, action } => {
+                Some(Revision::RevisionView { guid, action })
+            }
         }
     }
 
@@ -118,6 +127,7 @@ impl RevisionBuilder {
         match self {
             RevisionBuilder::RowColumn { changes, .. }
             | RevisionBuilder::CellChange { changes, .. } => changes.push(change),
+            RevisionBuilder::RevisionView { .. } => {}
         }
     }
 }
@@ -305,7 +315,6 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 _ => {}
             },
 
-            #[allow(clippy::single_match)]
             Ok(Event::Empty(e)) => match local(e.name().as_ref()) {
                 b"rrc" => {
                     let sid = attr(&e, b"sId")
@@ -339,6 +348,19 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                 .unwrap_or(false),
                         });
                     }
+                }
+                b"rcv" => {
+                    revisions.push(RevisionBuilder::RevisionView {
+                        guid: attr(&e, b"guid")
+                            .unwrap_or_default()
+                            .trim_matches(['{', '}'])
+                            .to_string(),
+                        action: match attr(&e, b"action").unwrap_or_default().as_str() {
+                            "add" => RevisionViewAction::Add,
+                            "delete" => RevisionViewAction::Delete,
+                            _ => RevisionViewAction::Add,
+                        },
+                    });
                 }
 
                 _ => {}

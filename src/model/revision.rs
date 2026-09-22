@@ -27,6 +27,16 @@ pub enum RevisionRowColumnAction {
     DeleteCol,
 }
 
+/// Enum for `RevisionChangeEnum::RevisionView.action`
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub enum RevisionViewAction {
+    /// Add
+    Add,
+    /// Delete
+    Delete,
+}
+
 /// In revisionLog this
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
@@ -97,6 +107,13 @@ pub enum Revision {
         /// Action type
         action: String,
     },
+    /// <rcv> revision custom view changes
+    RevisionView {
+        /// guid of custom view
+        guid: String,
+        /// Action taken like Add or Delete
+        action: RevisionViewAction,
+    },
 }
 
 impl Revision {
@@ -105,7 +122,7 @@ impl Revision {
         match self {
             Revision::RowColumn { rid, .. } => Some(*rid),
             Revision::CellChange { rid, .. } => Some(*rid),
-            Revision::Formatting { .. } => None,
+            Revision::Formatting { .. } | Revision::RevisionView { .. } => None,
         }
     }
 
@@ -114,7 +131,7 @@ impl Revision {
         match self {
             Revision::RowColumn { sid, .. } => Some(*sid),
             Revision::CellChange { sid, .. } => Some(*sid),
-            Revision::Formatting { .. } => None,
+            Revision::Formatting { .. } | Revision::RevisionView { .. } => None,
         }
     }
 }
