@@ -53,31 +53,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
         match revision {
             Revision::CellChange { rid, sid, changes } => {
                 s.push_str(&format!(r#"<rcc rId="{}" sId="{}">"#, rid, sid));
-                for change in changes {
-                    match change {
-                        RevisionChange::NewCell { address, value } => {
-                            match value {
-                                Cell::Text(text) => {
-                                    s.push_str(&format!(r#"<nc r="{}" t="inlineStr">"#, address));
-                                    s.push_str("<is>");
-                                    s.push_str(&format!("<t>{}</t>", text));
-                                    s.push_str("</is>");
-                                }
-                                Cell::Formula { formula, .. } => {
-                                    s.push_str(&format!(r#"<nc r="{}">"#, address));
-                                    s.push_str(&format!("<f>{}</f>", formula));
-                                }
-                                Cell::Number(number) => {
-                                    s.push_str(&format!(r#"<nc r="{}">"#, address));
-                                    s.push_str(&format!("<v>{}</v>", number));
-                                }
-                                _ => {}
-                            }
-                            s.push_str("</nc>");
-                        }
-                        _ => {}
-                    }
-                }
+                push_changes(&mut s, &changes);
                 s.push_str("</rcc>");
             }
             Revision::RowColumn {
@@ -152,4 +128,33 @@ pub(super) fn revision_headers_rels(n_revision_logs: usize) -> String {
     }
     s.push_str("</Relationships>");
     s
+}
+
+#[allow(clippy::single_match)]
+fn push_changes(s: &mut String, changes: &[RevisionChange]) {
+    for change in changes {
+        match change {
+            RevisionChange::NewCell { address, value } => {
+                match value {
+                    Cell::Text(text) => {
+                        s.push_str(&format!(r#"<nc r="{}" t="inlineStr">"#, address));
+                        s.push_str("<is>");
+                        s.push_str(&format!("<t>{}</t>", text));
+                        s.push_str("</is>");
+                    }
+                    Cell::Formula { formula, .. } => {
+                        s.push_str(&format!(r#"<nc r="{}">"#, address));
+                        s.push_str(&format!("<f>{}</f>", formula));
+                    }
+                    Cell::Number(number) => {
+                        s.push_str(&format!(r#"<nc r="{}">"#, address));
+                        s.push_str(&format!("<v>{}</v>", number));
+                    }
+                    _ => {}
+                }
+                s.push_str("</nc>");
+            }
+            _ => {}
+        }
+    }
 }
