@@ -80,6 +80,25 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 }
                 s.push_str("</rcc>");
             }
+            Revision::RowColumn {
+                rid,
+                sid,
+                action,
+                address,
+                changes,
+                eol,
+            } => {
+                if changes.is_empty() {
+                    s.push_str(&format!(
+                        r#"<rrc rId="{rid}" sId="{sid}" action="{action}" ref="{address}" eol="{}"/>"#, if eol { "1" } else { "0" }
+                    ));
+                } else {
+                    todo!()
+                }
+            }
+            Revision::RevisionView { guid, action } => {
+                s.push_str(&format!(r#"<rcv guid="{{{}}} action="{}"/>""#, guid, action));
+            }
             _ => {}
         }
     }
