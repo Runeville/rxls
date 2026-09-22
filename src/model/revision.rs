@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
@@ -27,6 +29,19 @@ pub enum RevisionRowColumnAction {
     DeleteCol,
 }
 
+impl fmt::Display for RevisionRowColumnAction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let value = match self {
+            Self::InsertRow => "insertRow",
+            Self::DeleteRow => "deleteRow",
+            Self::InsertCol => "insertCol",
+            Self::DeleteCol => "deleteCol",
+        };
+
+        f.write_str(value)
+    }
+}
+
 /// Enum for `RevisionChangeEnum::RevisionView.action`
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
@@ -35,6 +50,17 @@ pub enum RevisionViewAction {
     Add,
     /// Delete
     Delete,
+}
+
+impl fmt::Display for RevisionViewAction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let value = match self {
+            Self::Add => "add",
+            Self::Delete => "delete",
+        };
+
+        f.write_str(value)
+    }
 }
 
 /// In revisionLog this
