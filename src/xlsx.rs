@@ -460,38 +460,35 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         });
     }
 
-    let revision_data = if let Some(revision_headers_xml) = revision_headers_xml {
-        let parsed = parse_revision_headers(&revision_headers_xml);
-        let mut revision_logs: Vec<RevisionLog> = Vec::with_capacity(parsed.revisions.len());
+    let revision_data = user_names_xml.map(|user_names_xml| {
+        let users = parse_revision_user_names(&user_names_xml);
 
-        for revision_header in parsed.revisions {
-            let rid = revision_header
-                .rid
-                .strip_prefix("rId")
-                .unwrap_or(&revision_header.rid);
-            let revision_log_path = format!("/xl/revisions/revisionLog{}.xml", rid);
-            let revision_xml = part(&mut zip, &revision_log_path);
+        let revision_logs = revision_headers_xml
+            .map(|revision_headers_xml| {
+                let parsed = parse_revision_headers(&revision_headers_xml);
 
-            if let Some(revision_xml) = revision_xml {
-                let revision = parse_revision(&revision_xml, &revision_header);
-                revision_logs.push(revision);
-            }
-        }
+                parsed
+                    .revisions
+                    .into_iter()
+                    .filter_map(|revision_header| {
+                        let rid = revision_header
+                            .rid
+                            .strip_prefix("rId")
+                            .unwrap_or(&revision_header.rid);
 
-        let users = if let Some(user_names_xml) = user_names_xml {
-            parse_revision_user_names(&user_names_xml)
-        } else {
-            Vec::new()
-        };
+                        let path = format!("/xl/revisions/revisionLog{rid}.xml");
 
-        let revision_data = RevisionData {
+                        part(&mut zip, &path).map(|xml| parse_revision(&xml, &revision_header))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        RevisionData {
             revision_logs,
             users,
-        };
-        Some(revision_data)
-    } else {
-        None
-    };
+        }
+    });
 
     Ok(Workbook {
         sheets,
