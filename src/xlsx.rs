@@ -109,7 +109,6 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
     let workbook_rels_xml = part(&mut zip, &sheet_rels_path(&workbook_path)).unwrap_or_default();
     let workbook_relationships = parse_ooxml_relationships(&workbook_rels_xml);
     let workbook_revisions_headers_xml = part(&mut zip, "/xl/revisions/revisionHeaders.xml");
-    let workbook_revisions_user_names_xml = part(&mut zip, "/xl/revisions/userNames.xml");
     let shared_xml = match workbook_related_part(
         &mut zip,
         &workbook_path,
@@ -126,6 +125,17 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
             return Err(Error::Zip("invalid shared-strings relationship"));
         }
     };
+
+    let user_names_xml =
+        match workbook_related_part(&mut zip, &workbook_path, &workbook_rels_xml, "usernames") {
+            RelatedPartRead::Present(xml) => Some(xml),
+            RelatedPartRead::MissingRelationship => part(
+                &mut zip,
+                &normalize_part_target(&workbook_path, "/xl/revisions/userNames.xml"),
+            ),
+            RelatedPartRead::Invalid => None,
+        };
+
     let theme = match workbook_related_part(&mut zip, &workbook_path, &workbook_rels_xml, "theme") {
         RelatedPartRead::Present(xml) => parse_theme(&xml),
         RelatedPartRead::MissingRelationship => part(
@@ -458,7 +468,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
             }
         }
 
-        let users = if let Some(user_names_xml) = workbook_revisions_user_names_xml {
+        let users = if let Some(user_names_xml) = user_names_xml {
             parse_revision_user_names(&user_names_xml)
         } else {
             Vec::new()
