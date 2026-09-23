@@ -108,7 +108,6 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
     let workbook_xml = part(&mut zip, &workbook_path).ok_or(Error::MissingWorkbook)?;
     let workbook_rels_xml = part(&mut zip, &sheet_rels_path(&workbook_path)).unwrap_or_default();
     let workbook_relationships = parse_ooxml_relationships(&workbook_rels_xml);
-    let workbook_revisions_headers_xml = part(&mut zip, "/xl/revisions/revisionHeaders.xml");
     let shared_xml = match workbook_related_part(
         &mut zip,
         &workbook_path,
@@ -125,7 +124,6 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
             return Err(Error::Zip("invalid shared-strings relationship"));
         }
     };
-
     let user_names_xml =
         match workbook_related_part(&mut zip, &workbook_path, &workbook_rels_xml, "usernames") {
             RelatedPartRead::Present(xml) => Some(xml),
@@ -135,7 +133,19 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
             ),
             RelatedPartRead::Invalid => None,
         };
-
+    let revision_headers_xml = match workbook_related_part(
+        &mut zip,
+        &workbook_path,
+        &workbook_rels_xml,
+        "revisionHeaders",
+    ) {
+        RelatedPartRead::Present(xml) => Some(xml),
+        RelatedPartRead::MissingRelationship => part(
+            &mut zip,
+            &normalize_part_target(&workbook_path, "/xl/revisions/revisionHeaders.xml"),
+        ),
+        RelatedPartRead::Invalid => None,
+    };
     let theme = match workbook_related_part(&mut zip, &workbook_path, &workbook_rels_xml, "theme") {
         RelatedPartRead::Present(xml) => parse_theme(&xml),
         RelatedPartRead::MissingRelationship => part(
@@ -450,7 +460,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         });
     }
 
-    let revision_data = if let Some(revision_headers_xml) = workbook_revisions_headers_xml {
+    let revision_data = if let Some(revision_headers_xml) = revision_headers_xml {
         let parsed = parse_revision_headers(&revision_headers_xml);
         let mut revision_logs: Vec<RevisionLog> = Vec::with_capacity(parsed.revisions.len());
 
