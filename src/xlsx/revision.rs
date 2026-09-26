@@ -395,7 +395,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         sid: attr(&e, b"sheetId")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
-                        name: attr(&e, b"sheetPosition").map(Into::into).unwrap(),
+                        name: attr(&e, b"name").map(Into::into).unwrap(),
                         sheet_position: attr(&e, b"sheetPosition")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
