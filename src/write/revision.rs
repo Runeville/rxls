@@ -93,6 +93,17 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     rid, sid, name, sheet_position
                 ));
             }
+            Revision::RenameSheet {
+                rid,
+                sid,
+                old_name,
+                new_name,
+            } => {
+                s.push_str(&format!(
+                    r#"<rsnm rId="{}" sheetId="{}" oldName="{}" newName="{}"/>"#,
+                    rid, sid, old_name, new_name
+                ));
+            }
             _ => {}
         }
     }

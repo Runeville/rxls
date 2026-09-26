@@ -98,6 +98,12 @@ enum RevisionBuilder {
         name: SheetName,
         sheet_position: usize,
     },
+    RenameSheet {
+        rid: usize,
+        sid: usize,
+        old_name: SheetName,
+        new_name: SheetName,
+    },
 }
 
 impl RevisionBuilder {
@@ -138,6 +144,17 @@ impl RevisionBuilder {
                 name,
                 sheet_position,
             }),
+            RevisionBuilder::RenameSheet {
+                rid,
+                sid,
+                old_name,
+                new_name,
+            } => Some(Revision::RenameSheet {
+                rid,
+                sid,
+                old_name,
+                new_name,
+            }),
         }
     }
 
@@ -145,7 +162,9 @@ impl RevisionBuilder {
         match self {
             RevisionBuilder::RowColumn { changes, .. }
             | RevisionBuilder::CellChange { changes, .. } => changes.push(change),
-            RevisionBuilder::RevisionView { .. } | RevisionBuilder::InsertSheet { .. } => {}
+            RevisionBuilder::RevisionView { .. }
+            | RevisionBuilder::InsertSheet { .. }
+            | RevisionBuilder::RenameSheet { .. } => {}
         }
     }
 }
@@ -380,6 +399,18 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         sheet_position: attr(&e, b"sheetPosition")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
+                    });
+                }
+                b"rsnm" => {
+                    revisions.push(RevisionBuilder::RenameSheet {
+                        rid: attr(&e, b"rId")
+                            .and_then(|value| value.parse::<usize>().ok())
+                            .unwrap_or_default(),
+                        sid: attr(&e, b"sheetId")
+                            .and_then(|value| value.parse::<usize>().ok())
+                            .unwrap_or_default(),
+                        old_name: attr(&e, b"oldName").map(Into::into).unwrap(),
+                        new_name: attr(&e, b"newName").map(Into::into).unwrap(),
                     });
                 }
                 b"rcv" => {
