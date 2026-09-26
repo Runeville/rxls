@@ -1,4 +1,4 @@
-use std::{fmt, str::FromStr};
+use std::fmt;
 
 #[cfg(feature = "serde")]
 use serde::Serialize;
