@@ -27,7 +27,7 @@ pub use cell::{
 pub use cell::{excel_serial_to_duration, excel_serial_to_naive_datetime};
 pub use revision::{
     Revision, RevisionChange, RevisionData, RevisionLog, RevisionRowColumnAction,
-    RevisionViewAction, User,
+    RevisionViewAction, SheetName, User,
 };
 
 #[cfg(test)]
