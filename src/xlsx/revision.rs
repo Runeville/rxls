@@ -3,7 +3,8 @@ use quick_xml::Reader;
 
 use super::{attr, local, text_of};
 use crate::{
-    Cell, Revision, RevisionChange, RevisionLog, RevisionRowColumnAction, RevisionViewAction, User,
+    Cell, Revision, RevisionChange, RevisionLog, RevisionRowColumnAction, RevisionViewAction,
+    SheetName, User,
 };
 
 #[derive(PartialEq)]
@@ -91,6 +92,12 @@ enum RevisionBuilder {
         guid: String,
         action: RevisionViewAction,
     },
+    InsertSheet {
+        rid: usize,
+        sid: usize,
+        name: SheetName,
+        sheet_position: usize,
+    },
 }
 
 impl RevisionBuilder {
@@ -120,6 +127,17 @@ impl RevisionBuilder {
             RevisionBuilder::RevisionView { guid, action } => {
                 Some(Revision::RevisionView { guid, action })
             }
+            RevisionBuilder::InsertSheet {
+                rid,
+                sid,
+                name,
+                sheet_position,
+            } => Some(Revision::InsertSheet {
+                rid,
+                sid,
+                name,
+                sheet_position,
+            }),
         }
     }
 
@@ -127,7 +145,7 @@ impl RevisionBuilder {
         match self {
             RevisionBuilder::RowColumn { changes, .. }
             | RevisionBuilder::CellChange { changes, .. } => changes.push(change),
-            RevisionBuilder::RevisionView { .. } => {}
+            RevisionBuilder::RevisionView { .. } | RevisionBuilder::InsertSheet { .. } => {}
         }
     }
 }
@@ -320,6 +338,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     let sid = attr(&e, b"sId")
                         .and_then(|value| value.parse::<usize>().ok())
                         .unwrap_or_default();
+                    // TODO: probably should throw an error if action is not known
                     let action = match attr(&e, b"action").unwrap_or_default().as_str() {
                         "insertRow" => RevisionRowColumnAction::InsertRow,
                         "deleteRow" => RevisionRowColumnAction::DeleteRow,
@@ -348,6 +367,20 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                 .unwrap_or(false),
                         });
                     }
+                }
+                b"ris" => {
+                    revisions.push(RevisionBuilder::InsertSheet {
+                        rid: attr(&e, b"rId")
+                            .and_then(|value| value.parse::<usize>().ok())
+                            .unwrap_or_default(),
+                        sid: attr(&e, b"sId")
+                            .and_then(|value| value.parse::<usize>().ok())
+                            .unwrap_or_default(),
+                        name: attr(&e, b"sheetPosition").map(Into::into).unwrap(),
+                        sheet_position: attr(&e, b"sheetPosition")
+                            .and_then(|value| value.parse::<usize>().ok())
+                            .unwrap_or_default(),
+                    });
                 }
                 b"rcv" => {
                     revisions.push(RevisionBuilder::RevisionView {

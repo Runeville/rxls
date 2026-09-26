@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 
 #[cfg(feature = "serde")]
 use serde::Serialize;
@@ -140,6 +140,18 @@ pub enum Revision {
         /// Action taken like Add or Delete
         action: RevisionViewAction,
     },
+    /// <ris> insert sheet
+    /// example: <ris rId="3" sheetId="2" name="[test.xlsx]Sheet1" sheetPosition="1"/>
+    InsertSheet {
+        /// rId
+        rid: usize,
+        /// sId
+        sid: usize,
+        /// Sheet name
+        name: SheetName,
+        /// Sheet position
+        sheet_position: usize,
+    },
 }
 
 impl Revision {
@@ -149,6 +161,7 @@ impl Revision {
             Revision::RowColumn { rid, .. } => Some(*rid),
             Revision::CellChange { rid, .. } => Some(*rid),
             Revision::Formatting { .. } | Revision::RevisionView { .. } => None,
+            Revision::InsertSheet { rid, .. } => Some(*rid),
         }
     }
 
@@ -158,7 +171,51 @@ impl Revision {
             Revision::RowColumn { sid, .. } => Some(*sid),
             Revision::CellChange { sid, .. } => Some(*sid),
             Revision::Formatting { .. } | Revision::RevisionView { .. } => None,
+            Revision::InsertSheet { sid, .. } => Some(*sid),
         }
+    }
+}
+
+/// Sheet name used in some revision types
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct SheetName {
+    /// Name of the workbook
+    workbook_name: Option<String>,
+    /// Name of the sheet
+    name: String,
+}
+
+impl fmt::Display for SheetName {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self.workbook_name {
+            Some(workbook_name) => write!(f, "[{}]{}", workbook_name, self.name),
+            None => write!(f, "{}", self.name),
+        }
+    }
+}
+
+impl From<&str> for SheetName {
+    fn from(s: &str) -> Self {
+        if let Some(rest) = s.strip_prefix('[') {
+            if let Some((workbook, sheet)) = rest.split_once(']') {
+                return Self {
+                    workbook_name: Some(workbook.to_string()),
+                    name: sheet.to_string(),
+                };
+            }
+        }
+
+        Self {
+            workbook_name: None,
+            name: s.to_string(),
+        }
+    }
+}
+
+impl From<String> for SheetName {
+    fn from(s: String) -> Self {
+        Self::from(s.as_str())
     }
 }
 

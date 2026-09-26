@@ -82,6 +82,17 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     guid, action
                 ));
             }
+            Revision::InsertSheet {
+                rid,
+                sid,
+                name,
+                sheet_position,
+            } => {
+                s.push_str(&format!(
+                    r#"<ris rId="{}" sId="{}" name="{}" sheetPosition="{}"/>"#,
+                    rid, sid, name, sheet_position
+                ));
+            }
             _ => {}
         }
     }
