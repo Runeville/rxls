@@ -89,7 +89,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 sheet_position,
             } => {
                 s.push_str(&format!(
-                    r#"<ris rId="{}" sId="{}" name="{}" sheetPosition="{}"/>"#,
+                    r#"<ris rId="{}" sheetId="{}" name="{}" sheetPosition="{}"/>"#,
                     rid, sid, name, sheet_position
                 ));
             }
