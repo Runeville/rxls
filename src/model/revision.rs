@@ -152,6 +152,18 @@ pub enum Revision {
         /// Sheet position
         sheet_position: usize,
     },
+    /// Rename sheet
+    /// example: <rsnm rId="5" sheetId="3" oldName="[test.xlsx]Sheet1" newName="[test.xlsx]hello"/>
+    RenameSheet {
+        /// rId
+        rid: usize,
+        /// sId
+        sid: usize,
+        /// Old sheet name
+        old_name: SheetName,
+        /// New sheet name
+        new_name: SheetName,
+    },
 }
 
 impl Revision {
@@ -162,6 +174,7 @@ impl Revision {
             Revision::CellChange { rid, .. } => Some(*rid),
             Revision::Formatting { .. } | Revision::RevisionView { .. } => None,
             Revision::InsertSheet { rid, .. } => Some(*rid),
+            Revision::RenameSheet { rid, .. } => Some(*rid),
         }
     }
 
@@ -172,6 +185,7 @@ impl Revision {
             Revision::CellChange { sid, .. } => Some(*sid),
             Revision::Formatting { .. } | Revision::RevisionView { .. } => None,
             Revision::InsertSheet { sid, .. } => Some(*sid),
+            Revision::RenameSheet { sid, .. } => Some(*sid),
         }
     }
 }
