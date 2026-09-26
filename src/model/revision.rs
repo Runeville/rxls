@@ -195,7 +195,7 @@ impl Revision {
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct SheetName {
     /// Name of the workbook
-    workbook_name: Option<String>,
+    pub workbook_name: Option<String>,
     /// Name of the sheet
     pub name: String,
 }
