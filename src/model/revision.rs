@@ -197,7 +197,7 @@ pub struct SheetName {
     /// Name of the workbook
     workbook_name: Option<String>,
     /// Name of the sheet
-    name: String,
+    pub name: String,
 }
 
 impl fmt::Display for SheetName {
