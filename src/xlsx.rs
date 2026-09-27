@@ -87,8 +87,7 @@ use crate::{
     Cell, CellStyle, DvKind, DvOp, PrintLossKind, PrintPageOrder, StyleLoss, StyleLossKind,
 };
 use crate::{
-    Color, DocProperties, FormatScript, RevisionData, RevisionLog, Sheet, SheetType, StyleFidelity,
-    Workbook,
+    Color, DocProperties, FormatScript, RevisionData, Sheet, SheetType, StyleFidelity, Workbook,
 };
 
 /// Detect the ZIP/OOXML magic (`PK\x03\x04`).
