@@ -27,6 +27,10 @@ enum RevisionChangeBuilder {
         address: String,
         value: Option<Cell>,
     },
+    OldCell {
+        address: String,
+        value: Option<Cell>,
+    },
     RowColumn {
         sid: usize,
         /// Action taken like Insert or Delete
@@ -48,6 +52,10 @@ impl RevisionChangeBuilder {
                 })
             }
             RevisionChangeBuilder::NewCell { address, value } => Some(RevisionChange::NewCell {
+                address,
+                value: value?,
+            }),
+            RevisionChangeBuilder::OldCell { address, value } => Some(RevisionChange::OldCell {
                 address,
                 value: value?,
             }),
@@ -339,6 +347,14 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     changes_stack.push(change);
                 }
 
+                b"oc" => {
+                    let change = RevisionChangeBuilder::OldCell {
+                        value: None,
+                        address: attr(&e, b"r").unwrap_or_default(),
+                    };
+                    changes_stack.push(change);
+                }
+
                 b"v" => {
                     parser_state = Some(ParserState::V);
                 }
@@ -481,6 +497,14 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 b"nc" => {
                     if let Some(last_change) =
                         changes_stack.pop_if(|c| matches!(c, RevisionChangeBuilder::NewCell { .. }))
+                    {
+                        current_revision.as_mut().unwrap().push_change(last_change);
+                    }
+                }
+
+                b"oc" => {
+                    if let Some(last_change) =
+                        changes_stack.pop_if(|c| matches!(c, RevisionChangeBuilder::OldCell { .. }))
                     {
                         current_revision.as_mut().unwrap().push_change(last_change);
                     }

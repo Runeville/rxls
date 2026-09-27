@@ -74,6 +74,13 @@ pub enum RevisionChange {
         /// <v> value
         value: Cell,
     },
+    /// <oc> old cell
+    OldCell {
+        /// ref
+        address: String,
+        /// <v> value
+        value: Cell,
+    },
     /// <rcc> cell change
     CellChange {
         /// sid
