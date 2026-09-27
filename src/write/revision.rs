@@ -183,7 +183,9 @@ fn push_changes(s: &mut String, changes: &[RevisionChange]) {
                         s.push_str(&format!(r#"<nc r="{}"/>"#, address));
                     }
                 }
-                s.push_str("</nc>");
+                if value.is_some() {
+                    s.push_str("</nc>");
+                }
             }
 
             RevisionChange::OldCell { address, value } => {
