@@ -450,7 +450,8 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     if let Some(current_change) = &mut changes_stack.last_mut() {
                         match state {
                             ParserState::V => {
-                                if let RevisionChangeBuilder::NewCell { value, .. } = current_change
+                                if let RevisionChangeBuilder::NewCell { value, .. }
+                                | RevisionChangeBuilder::OldCell { value, .. } = current_change
                                 {
                                     let new_value = text_of(&e);
                                     if let Ok(new_value) = new_value.parse::<f64>() {
@@ -461,13 +462,15 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                 }
                             }
                             ParserState::T => {
-                                if let RevisionChangeBuilder::NewCell { value, .. } = current_change
+                                if let RevisionChangeBuilder::NewCell { value, .. }
+                                | RevisionChangeBuilder::OldCell { value, .. } = current_change
                                 {
                                     *value = Some(Cell::Text(text_of(&e)));
                                 }
                             }
                             ParserState::F => {
-                                if let RevisionChangeBuilder::NewCell { value, .. } = current_change
+                                if let RevisionChangeBuilder::NewCell { value, .. }
+                                | RevisionChangeBuilder::OldCell { value, .. } = current_change
                                 {
                                     *value = Some(Cell::Formula {
                                         formula: text_of(&e),
