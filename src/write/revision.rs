@@ -180,6 +180,27 @@ fn push_changes(s: &mut String, changes: &[RevisionChange]) {
                 }
                 s.push_str("</nc>");
             }
+
+            RevisionChange::OldCell { address, value } => {
+                match value {
+                    Cell::Text(text) => {
+                        s.push_str(&format!(r#"<oc r="{}" t="inlineStr">"#, address));
+                        s.push_str("<is>");
+                        s.push_str(&format!("<t>{}</t>", text));
+                        s.push_str("</is>");
+                    }
+                    Cell::Formula { formula, .. } => {
+                        s.push_str(&format!(r#"<oc r="{}">"#, address));
+                        s.push_str(&format!("<f>{}</f>", formula));
+                    }
+                    Cell::Number(number) => {
+                        s.push_str(&format!(r#"<oc r="{}">"#, address));
+                        s.push_str(&format!("<v>{}</v>", number));
+                    }
+                    _ => {}
+                }
+                s.push_str("</oc>");
+            }
             _ => {}
         }
     }
