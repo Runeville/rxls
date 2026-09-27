@@ -441,6 +441,14 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         },
                     });
                 }
+                b"nc" => {
+                    current_revision.as_mut().unwrap().push_change(
+                        RevisionChangeBuilder::NewCell {
+                            address: attr(&e, b"r").unwrap_or_default(),
+                            value: None,
+                        },
+                    );
+                }
 
                 _ => {}
             },
