@@ -51,10 +51,9 @@ impl RevisionChangeBuilder {
                     changes: changes.into_iter().filter_map(|c| c.build()).collect(),
                 })
             }
-            RevisionChangeBuilder::NewCell { address, value } => Some(RevisionChange::NewCell {
-                address,
-                value: value?,
-            }),
+            RevisionChangeBuilder::NewCell { address, value } => {
+                Some(RevisionChange::NewCell { address, value })
+            }
             RevisionChangeBuilder::OldCell { address, value } => Some(RevisionChange::OldCell {
                 address,
                 value: value?,

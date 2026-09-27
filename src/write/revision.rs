@@ -162,21 +162,26 @@ fn push_changes(s: &mut String, changes: &[RevisionChange]) {
         match change {
             RevisionChange::NewCell { address, value } => {
                 match value {
-                    Cell::Text(text) => {
-                        s.push_str(&format!(r#"<nc r="{}" t="inlineStr">"#, address));
-                        s.push_str("<is>");
-                        s.push_str(&format!("<t>{}</t>", text));
-                        s.push_str("</is>");
+                    Some(value) => match value {
+                        Cell::Text(text) => {
+                            s.push_str(&format!(r#"<nc r="{}" t="inlineStr">"#, address));
+                            s.push_str("<is>");
+                            s.push_str(&format!("<t>{}</t>", text));
+                            s.push_str("</is>");
+                        }
+                        Cell::Formula { formula, .. } => {
+                            s.push_str(&format!(r#"<nc r="{}">"#, address));
+                            s.push_str(&format!("<f>{}</f>", formula));
+                        }
+                        Cell::Number(number) => {
+                            s.push_str(&format!(r#"<nc r="{}">"#, address));
+                            s.push_str(&format!("<v>{}</v>", number));
+                        }
+                        _ => {}
+                    },
+                    None => {
+                        s.push_str(&format!(r#"<nc r="{}"/>"#, address));
                     }
-                    Cell::Formula { formula, .. } => {
-                        s.push_str(&format!(r#"<nc r="{}">"#, address));
-                        s.push_str(&format!("<f>{}</f>", formula));
-                    }
-                    Cell::Number(number) => {
-                        s.push_str(&format!(r#"<nc r="{}">"#, address));
-                        s.push_str(&format!("<v>{}</v>", number));
-                    }
-                    _ => {}
                 }
                 s.push_str("</nc>");
             }

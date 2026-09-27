@@ -71,8 +71,8 @@ pub enum RevisionChange {
     NewCell {
         /// ref
         address: String,
-        /// <v> value
-        value: Cell,
+        /// <v> value. If None, the cell was cleared.
+        value: Option<Cell>,
     },
     /// <oc> old cell
     OldCell {
