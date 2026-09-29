@@ -599,6 +599,12 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     }
                 }
 
+                b"rfmt" => {
+                    if let Some(current_revision) = current_revision.take() {
+                        revisions.push(current_revision);
+                    }
+                }
+
                 b"nc" => {
                     if let Some(last_change) =
                         changes_stack.pop_if(|c| matches!(c, RevisionChangeBuilder::NewCell { .. }))
