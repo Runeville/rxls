@@ -404,6 +404,13 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
 
                 b"font" => {
                     parser_state = Some(ParserState::Font);
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting { formatting, .. } = current_revision {
+                            if let Some(formatting) = formatting.as_mut() {
+                                formatting.font = Some(RevisionFont::default());
+                            }
+                        }
+                    }
                 }
 
                 b"v" => {
