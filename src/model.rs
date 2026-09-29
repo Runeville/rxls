@@ -26,8 +26,9 @@ pub use cell::{
 #[cfg(feature = "chrono")]
 pub use cell::{excel_serial_to_duration, excel_serial_to_naive_datetime};
 pub use revision::{
-    Revision, RevisionChange, RevisionData, RevisionLog, RevisionRowColumnAction,
-    RevisionViewAction, SheetName, User,
+    DifferentialFormat as RevisionDifferentialFormat, Font as RevisionFont, Revision,
+    RevisionChange, RevisionData, RevisionLog, RevisionRowColumnAction, RevisionViewAction,
+    SheetName, User,
 };
 
 #[cfg(test)]

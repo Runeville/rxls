@@ -131,6 +131,8 @@ pub enum Revision {
     },
     /// Format cell
     Formatting {
+        /// sId
+        sid: usize,
         /// Start indicates where to apply to apply the formatting on the string
         start: usize,
         /// Length indicates where to apply to apply the formatting on the string
@@ -138,7 +140,7 @@ pub enum Revision {
         /// Address of formatted cell
         address: String,
         /// Action type
-        action: String,
+        formatting: Option<DifferentialFormat>,
     },
     /// <rcv> revision custom view changes
     RevisionView {
@@ -190,9 +192,10 @@ impl Revision {
         match self {
             Revision::RowColumn { sid, .. } => Some(*sid),
             Revision::CellChange { sid, .. } => Some(*sid),
-            Revision::Formatting { .. } | Revision::RevisionView { .. } => None,
             Revision::InsertSheet { sid, .. } => Some(*sid),
             Revision::RenameSheet { sid, .. } => Some(*sid),
+            Revision::Formatting { sid, .. } => Some(*sid),
+            Revision::RevisionView { .. } => None,
         }
     }
 }
@@ -297,4 +300,28 @@ pub struct User {
     pub id: i32,
     /// datetime of the user session
     pub datetime: String,
+}
+
+/// <rfmt> formatting
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct DifferentialFormat {
+    /// <font> font formatting
+    pub font: Option<Font>,
+}
+
+/// <font> possible inner tags
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct Font {
+    /// <b> bold
+    pub bold: Option<bool>,
+    /// <i> italic
+    pub italic: Option<bool>,
+    /// <strike> strikethrough
+    pub strikethrough: Option<bool>,
+    /// <u> underline
+    pub underline: Option<bool>,
+    /// <sz> font size
+    pub size: Option<f32>,
 }

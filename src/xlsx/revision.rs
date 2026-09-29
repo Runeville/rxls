@@ -3,8 +3,8 @@ use quick_xml::Reader;
 
 use super::{attr, local, text_of};
 use crate::{
-    Cell, Revision, RevisionChange, RevisionLog, RevisionRowColumnAction, RevisionViewAction,
-    SheetName, User,
+    Cell, Revision, RevisionChange, RevisionDifferentialFormat, RevisionFont, RevisionLog,
+    RevisionRowColumnAction, RevisionViewAction, SheetName, User,
 };
 
 #[derive(PartialEq)]
@@ -15,6 +15,8 @@ enum ParserState {
     T,
     /// Formula <f>
     F,
+    /// Font <font>
+    Font,
 }
 
 #[derive(Debug, Clone)]
@@ -111,6 +113,13 @@ enum RevisionBuilder {
         old_name: SheetName,
         new_name: SheetName,
     },
+    Formatting {
+        sid: usize,
+        start: usize,
+        length: usize,
+        address: String,
+        formatting: Option<RevisionDifferentialFormat>,
+    },
 }
 
 impl RevisionBuilder {
@@ -162,6 +171,19 @@ impl RevisionBuilder {
                 old_name,
                 new_name,
             }),
+            RevisionBuilder::Formatting {
+                sid,
+                start,
+                length,
+                address,
+                formatting,
+            } => Some(Revision::Formatting {
+                sid,
+                start,
+                length,
+                address,
+                formatting,
+            }),
         }
     }
 
@@ -171,7 +193,8 @@ impl RevisionBuilder {
             | RevisionBuilder::CellChange { changes, .. } => changes.push(change),
             RevisionBuilder::RevisionView { .. }
             | RevisionBuilder::InsertSheet { .. }
-            | RevisionBuilder::RenameSheet { .. } => {}
+            | RevisionBuilder::Formatting { .. } => {}
+            RevisionBuilder::RenameSheet { .. } => {}
         }
     }
 }
@@ -306,6 +329,7 @@ pub(super) fn parse_revision_user_names(xml: &str) -> Vec<User> {
     users
 }
 
+#[allow(clippy::collapsible_match)]
 pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionLog {
     let mut r = Reader::from_str(xml);
     let mut revisions: Vec<RevisionBuilder> = Vec::new();
@@ -338,6 +362,22 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     }
                 }
 
+                b"rfmt" => {
+                    current_revision = Some(RevisionBuilder::Formatting {
+                        sid: attr(&e, b"sheetId")
+                            .and_then(|value| value.parse::<usize>().ok())
+                            .unwrap_or_default(),
+                        start: attr(&e, b"start")
+                            .and_then(|value| value.parse::<usize>().ok())
+                            .unwrap_or_default(),
+                        length: attr(&e, b"length")
+                            .and_then(|value| value.parse::<usize>().ok())
+                            .unwrap_or_default(),
+                        address: attr(&e, b"address").unwrap_or_default(),
+                        formatting: None,
+                    });
+                }
+
                 b"nc" => {
                     let change = RevisionChangeBuilder::NewCell {
                         value: None,
@@ -352,6 +392,18 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         address: attr(&e, b"r").unwrap_or_default(),
                     };
                     changes_stack.push(change);
+                }
+
+                b"dxf" => {
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting { formatting, .. } = current_revision {
+                            *formatting = Some(RevisionDifferentialFormat { font: None });
+                        }
+                    }
+                }
+
+                b"font" => {
+                    parser_state = Some(ParserState::Font);
                 }
 
                 b"v" => {
@@ -450,6 +502,48 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     );
                 }
 
+                b"b" => {
+                    let is_bold = attr(&e, b"val").is_none_or(|value| value != "0");
+
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting { formatting, .. } = current_revision {
+                            if let Some(formatting) = formatting.as_mut() {
+                                if let Some(font) = formatting.font.as_mut() {
+                                    font.bold = Some(is_bold);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                b"i" => {
+                    let is_italic = attr(&e, b"val").is_none_or(|value| value != "0");
+
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting { formatting, .. } = current_revision {
+                            if let Some(formatting) = formatting.as_mut() {
+                                if let Some(font) = formatting.font.as_mut() {
+                                    font.italic = Some(is_italic);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                b"sz" => {
+                    let value = attr(&e, b"val").and_then(|value| value.parse::<f32>().ok());
+
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting { formatting, .. } = current_revision {
+                            if let Some(formatting) = formatting.as_mut() {
+                                if let Some(font) = formatting.font.as_mut() {
+                                    font.size = value;
+                                }
+                            }
+                        }
+                    }
+                }
+
                 _ => {}
             },
 
@@ -486,6 +580,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                     });
                                 }
                             }
+                            _ => {}
                         }
                     }
                 }
