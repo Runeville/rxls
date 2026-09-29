@@ -373,7 +373,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         length: attr(&e, b"length")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
-                        address: attr(&e, b"address").unwrap_or_default(),
+                        address: attr(&e, b"sqref").unwrap_or_default(),
                         formatting: None,
                     });
                 }
