@@ -311,7 +311,7 @@ pub struct DifferentialFormat {
 }
 
 /// <font> possible inner tags
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Font {
     /// <b> bold
