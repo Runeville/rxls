@@ -17,11 +17,11 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
             revision_log.user_name,
             revision_log.revision_log_id,
             revision_log
-                .min_rid()
+                .min_revision_id()
                 .map(|id| format!(r#"minRId="{id}""#))
                 .unwrap_or_default(),
             revision_log
-                .max_rid()
+                .max_revision_id()
                 .map(|id| format!(r#"maxRId="{id}""#))
                 .unwrap_or_default()
         ));
@@ -51,14 +51,21 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
 
     for revision in revision_log.revisions.clone() {
         match revision {
-            Revision::CellChange { rid, sid, changes } => {
-                s.push_str(&format!(r#"<rcc rId="{}" sId="{}">"#, rid, sid));
+            Revision::CellChange {
+                revision_id,
+                sheet_id,
+                changes,
+            } => {
+                s.push_str(&format!(
+                    r#"<rcc rId="{}" sId="{}">"#,
+                    revision_id, sheet_id
+                ));
                 push_changes(&mut s, &changes);
                 s.push_str("</rcc>");
             }
             Revision::RowColumn {
-                rid,
-                sid,
+                revision_id,
+                sheet_id,
                 action,
                 address,
                 changes,
@@ -66,11 +73,11 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
             } => {
                 if changes.is_empty() {
                     s.push_str(&format!(
-                        r#"<rrc rId="{rid}" sId="{sid}" action="{action}" ref="{address}" eol="{}"/>"#, if eol { "1" } else { "0" }
+                        r#"<rrc rId="{revision_id}" sId="{sheet_id}" action="{action}" ref="{address}" eol="{}"/>"#, if eol { "1" } else { "0" }
                     ));
                 } else {
                     s.push_str(&format!(
-                        r#"<rrc rId="{rid}" sId="{sid}" action="{action}" ref="{address}" eol="{}">"#, if eol { "1" } else { "0" }
+                        r#"<rrc rId="{revision_id}" sId="{sheet_id}" action="{action}" ref="{address}" eol="{}">"#, if eol { "1" } else { "0" }
                     ));
                     push_changes(&mut s, &changes);
                     s.push_str("</rrc>");
@@ -83,25 +90,25 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 ));
             }
             Revision::InsertSheet {
-                rid,
-                sid,
+                revision_id,
+                sheet_id,
                 name,
                 sheet_position,
             } => {
                 s.push_str(&format!(
                     r#"<ris rId="{}" sheetId="{}" name="{}" sheetPosition="{}"/>"#,
-                    rid, sid, name, sheet_position
+                    revision_id, sheet_id, name, sheet_position
                 ));
             }
             Revision::RenameSheet {
-                rid,
-                sid,
+                revision_id,
+                sheet_id,
                 old_name,
                 new_name,
             } => {
                 s.push_str(&format!(
                     r#"<rsnm rId="{}" sheetId="{}" oldName="{}" newName="{}"/>"#,
-                    rid, sid, old_name, new_name
+                    revision_id, sheet_id, old_name, new_name
                 ));
             }
             _ => {}

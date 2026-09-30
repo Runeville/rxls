@@ -22,7 +22,7 @@ enum ParserState {
 #[derive(Debug, Clone)]
 enum RevisionChangeBuilder {
     CellChange {
-        sid: usize,
+        sheet_id: usize,
         changes: Vec<RevisionChangeBuilder>,
     },
     NewCell {
@@ -34,7 +34,7 @@ enum RevisionChangeBuilder {
         value: Option<Cell>,
     },
     RowColumn {
-        sid: usize,
+        sheet_id: usize,
         /// Action taken like Insert or Delete
         action: RevisionRowColumnAction,
         /// Address of inserted or deleted item
@@ -47,9 +47,9 @@ enum RevisionChangeBuilder {
 impl RevisionChangeBuilder {
     pub fn build(self) -> Option<RevisionChange> {
         match self {
-            RevisionChangeBuilder::CellChange { sid, changes } => {
+            RevisionChangeBuilder::CellChange { sheet_id, changes } => {
                 Some(RevisionChange::CellChange {
-                    sid,
+                    sheet_id,
                     changes: changes.into_iter().filter_map(|c| c.build()).collect(),
                 })
             }
@@ -63,12 +63,12 @@ impl RevisionChangeBuilder {
             RevisionChangeBuilder::RowColumn {
                 action,
                 address,
-                sid,
+                sheet_id,
                 changes,
             } => Some(RevisionChange::RowColumn {
                 action,
                 address,
-                sid,
+                sheet_id,
                 changes: changes.into_iter().filter_map(|c| c.build()).collect(),
             }),
         }
@@ -79,8 +79,8 @@ impl RevisionChangeBuilder {
 enum RevisionBuilder {
     /// Insert or delete row or column
     RowColumn {
-        rid: usize,
-        sid: usize,
+        revision_id: usize,
+        sheet_id: usize,
         /// Action taken like Insert or Delete
         action: RevisionRowColumnAction,
         /// Address of inserted or deleted item
@@ -92,8 +92,8 @@ enum RevisionBuilder {
     },
     /// Change cell
     CellChange {
-        rid: usize,
-        sid: usize,
+        revision_id: usize,
+        sheet_id: usize,
         /// Changes
         changes: Vec<RevisionChangeBuilder>,
     },
@@ -102,19 +102,19 @@ enum RevisionBuilder {
         action: RevisionViewAction,
     },
     InsertSheet {
-        rid: usize,
-        sid: usize,
+        revision_id: usize,
+        sheet_id: usize,
         name: SheetName,
         sheet_position: usize,
     },
     RenameSheet {
-        rid: usize,
-        sid: usize,
+        revision_id: usize,
+        sheet_id: usize,
         old_name: SheetName,
         new_name: SheetName,
     },
     Formatting {
-        sid: usize,
+        sheet_id: usize,
         start: usize,
         length: usize,
         address: String,
@@ -126,59 +126,63 @@ impl RevisionBuilder {
     pub fn build(self) -> Option<Revision> {
         match self {
             RevisionBuilder::RowColumn {
+                revision_id,
+                sheet_id,
                 action,
                 address,
-                rid,
-                sid,
                 changes,
                 eol,
             } => Some(Revision::RowColumn {
-                rid,
-                sid,
+                revision_id,
+                sheet_id,
                 action,
                 address,
                 changes: changes.into_iter().filter_map(|c| c.build()).collect(),
                 eol,
             }),
 
-            RevisionBuilder::CellChange { rid, sid, changes } => Some(Revision::CellChange {
-                rid,
-                sid,
+            RevisionBuilder::CellChange {
+                revision_id,
+                sheet_id,
+                changes,
+            } => Some(Revision::CellChange {
+                revision_id,
+                sheet_id,
                 changes: changes.into_iter().filter_map(|c| c.build()).collect(),
             }),
             RevisionBuilder::RevisionView { guid, action } => {
                 Some(Revision::RevisionView { guid, action })
             }
             RevisionBuilder::InsertSheet {
-                rid,
-                sid,
+                revision_id,
+                sheet_id,
                 name,
                 sheet_position,
             } => Some(Revision::InsertSheet {
-                rid,
-                sid,
+                revision_id,
+                sheet_id,
                 name,
                 sheet_position,
             }),
             RevisionBuilder::RenameSheet {
-                rid,
-                sid,
+                revision_id,
+                sheet_id,
                 old_name,
                 new_name,
             } => Some(Revision::RenameSheet {
-                rid,
-                sid,
+                revision_id,
+                sheet_id,
                 old_name,
                 new_name,
             }),
             RevisionBuilder::Formatting {
-                sid,
+                sheet_id,
                 start,
                 length,
                 address,
                 formatting,
             } => Some(Revision::Formatting {
-                sid,
+                sheet_id,
                 start,
                 length,
                 address,
@@ -342,21 +346,21 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
         match r.read_event() {
             Ok(Event::Start(e)) => match local(e.name().as_ref()) {
                 b"rcc" => {
-                    let sid = attr(&e, b"sId")
+                    let sheet_id = attr(&e, b"sId")
                         .and_then(|value| value.parse::<usize>().ok())
                         .unwrap_or_default();
                     if current_revision.is_some() {
                         let current_change = RevisionChangeBuilder::CellChange {
-                            sid,
+                            sheet_id,
                             changes: Vec::new(),
                         };
                         changes_stack.push(current_change);
                     } else {
                         current_revision = Some(RevisionBuilder::CellChange {
-                            rid: attr(&e, b"rId")
+                            revision_id: attr(&e, b"rId")
                                 .and_then(|value| value.parse::<usize>().ok())
                                 .unwrap_or_default(),
-                            sid,
+                            sheet_id,
                             changes: Vec::new(),
                         })
                     }
@@ -364,7 +368,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
 
                 b"rfmt" => {
                     current_revision = Some(RevisionBuilder::Formatting {
-                        sid: attr(&e, b"sheetId")
+                        sheet_id: attr(&e, b"sheetId")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
                         start: attr(&e, b"start")
@@ -428,7 +432,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
 
             Ok(Event::Empty(e)) => match local(e.name().as_ref()) {
                 b"rrc" => {
-                    let sid = attr(&e, b"sId")
+                    let sheet_id = attr(&e, b"sId")
                         .and_then(|value| value.parse::<usize>().ok())
                         .unwrap_or_default();
                     // TODO: probably should throw an error if action is not known
@@ -442,17 +446,17 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     if let Some(current_revision) = current_revision.as_mut() {
                         current_revision.push_change(RevisionChangeBuilder::RowColumn {
                             address: attr(&e, b"ref").unwrap_or_default(),
-                            sid,
+                            sheet_id,
                             action,
                             changes: Vec::new(),
                         })
                     } else {
                         revisions.push(RevisionBuilder::RowColumn {
                             address: attr(&e, b"ref").unwrap_or_default(),
-                            rid: attr(&e, b"rId")
+                            revision_id: attr(&e, b"rId")
                                 .and_then(|value| value.parse::<usize>().ok())
                                 .unwrap_or_default(),
-                            sid,
+                            sheet_id,
                             action,
                             changes: Vec::new(),
                             eol: attr(&e, b"eol")
@@ -463,10 +467,10 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 }
                 b"ris" => {
                     revisions.push(RevisionBuilder::InsertSheet {
-                        rid: attr(&e, b"rId")
+                        revision_id: attr(&e, b"rId")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
-                        sid: attr(&e, b"sheetId")
+                        sheet_id: attr(&e, b"sheetId")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
                         name: attr(&e, b"name").map(Into::into).unwrap(),
@@ -477,10 +481,10 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 }
                 b"rsnm" => {
                     revisions.push(RevisionBuilder::RenameSheet {
-                        rid: attr(&e, b"rId")
+                        revision_id: attr(&e, b"rId")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
-                        sid: attr(&e, b"sheetId")
+                        sheet_id: attr(&e, b"sheetId")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
                         old_name: attr(&e, b"oldName").map(Into::into).unwrap(),
