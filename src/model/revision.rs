@@ -134,9 +134,9 @@ pub enum Revision {
         /// sId
         sheet_id: usize,
         /// Start indicates where to apply to apply the formatting on the string
-        start: usize,
+        start: Option<usize>,
         /// Length indicates where to apply to apply the formatting on the string
-        length: usize,
+        length: Option<usize>,
         /// Address of formatted cell
         address: String,
         /// Action type
