@@ -111,7 +111,47 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     revision_id, sheet_id, old_name, new_name
                 ));
             }
-            _ => {}
+            Revision::Formatting {
+                sheet_id,
+                start,
+                length,
+                address,
+                formatting,
+            } => {
+                s.push_str(&format!(
+                    r#"<rfmt sheetId="{}" sqref="{}" start="{}" lenght="{}">"#,
+                    sheet_id, address, start, length
+                ));
+                if let Some(formatting) = formatting {
+                    s.push_str("<dxf>");
+
+                    if let Some(font) = formatting.font {
+                        s.push_str("<font>");
+                        if let Some(bold) = font.bold {
+                            if bold {
+                                s.push_str("<b/>");
+                            } else {
+                                s.push_str(r#"<b val="0"/>"#);
+                            }
+                        }
+                        if let Some(italic) = font.italic {
+                            if italic {
+                                s.push_str("<i/>");
+                            } else {
+                                s.push_str(r#"<i val="0"/>"#);
+                            }
+                        }
+                        if let Some(size) = font.size {
+                            s.push_str(&format!(r#"<sz val="{}"/>"#, size));
+                        }
+                        s.push_str("</font>");
+                    }
+
+                    s.push_str("</dxf>");
+                }
+
+                s.push_str("</rfmt>");
+            }
         }
     }
 
