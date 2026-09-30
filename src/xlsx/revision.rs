@@ -542,7 +542,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 }
 
                 b"u" => {
-                    let is_underline = attr(&e, b"val").is_none_or(|value| value != "0");
+                    let is_underline = attr(&e, b"val").is_none_or(|value| value != "none");
 
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::Formatting { formatting, .. } = current_revision {
