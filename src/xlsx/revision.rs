@@ -541,6 +541,34 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     }
                 }
 
+                b"u" => {
+                    let is_underline = attr(&e, b"val").is_none_or(|value| value != "0");
+
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting { formatting, .. } = current_revision {
+                            if let Some(formatting) = formatting.as_mut() {
+                                if let Some(font) = formatting.font.as_mut() {
+                                    font.underline = Some(is_underline);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                b"strike" => {
+                    let is_strikethrough = attr(&e, b"val").is_none_or(|value| value != "0");
+
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting { formatting, .. } = current_revision {
+                            if let Some(formatting) = formatting.as_mut() {
+                                if let Some(font) = formatting.font.as_mut() {
+                                    font.strikethrough = Some(is_strikethrough);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 b"sz" => {
                     let value = attr(&e, b"val").and_then(|value| value.parse::<f32>().ok());
 
