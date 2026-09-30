@@ -84,14 +84,14 @@ pub enum RevisionChange {
     /// <rcc> cell change
     CellChange {
         /// sid
-        sid: usize,
+        sheet_id: usize,
         /// changes
         changes: Vec<RevisionChange>,
     },
     /// <rrc> row/column change
     RowColumn {
         /// sId
-        sid: usize,
+        sheet_id: usize,
         /// Action taken like Insert or Delete
         action: RevisionRowColumnAction,
         /// Address of inserted or deleted item
@@ -108,9 +108,9 @@ pub enum Revision {
     /// Insert or delete row or column
     RowColumn {
         /// rId
-        rid: usize,
+        revision_id: usize,
         /// sId
-        sid: usize,
+        sheet_id: usize,
         /// Action taken like Insert or Delete
         action: RevisionRowColumnAction,
         /// Address of inserted or deleted item
@@ -123,16 +123,16 @@ pub enum Revision {
     /// Change cell
     CellChange {
         /// rId
-        rid: usize,
+        revision_id: usize,
         /// sId
-        sid: usize,
+        sheet_id: usize,
         /// Changes
         changes: Vec<RevisionChange>,
     },
     /// Format cell
     Formatting {
         /// sId
-        sid: usize,
+        sheet_id: usize,
         /// Start indicates where to apply to apply the formatting on the string
         start: usize,
         /// Length indicates where to apply to apply the formatting on the string
@@ -153,9 +153,9 @@ pub enum Revision {
     /// example: <ris rId="3" sheetId="2" name="[test.xlsx]Sheet1" sheetPosition="1"/>
     InsertSheet {
         /// rId
-        rid: usize,
+        revision_id: usize,
         /// sId
-        sid: usize,
+        sheet_id: usize,
         /// Sheet name
         name: SheetName,
         /// Sheet position
@@ -165,9 +165,9 @@ pub enum Revision {
     /// example: <rsnm rId="5" sheetId="3" oldName="[test.xlsx]Sheet1" newName="[test.xlsx]hello"/>
     RenameSheet {
         /// rId
-        rid: usize,
+        revision_id: usize,
         /// sId
-        sid: usize,
+        sheet_id: usize,
         /// Old sheet name
         old_name: SheetName,
         /// New sheet name
@@ -179,22 +179,22 @@ impl Revision {
     /// Gets rId of revision if revision has it
     pub fn id(&self) -> Option<usize> {
         match self {
-            Revision::RowColumn { rid, .. } => Some(*rid),
-            Revision::CellChange { rid, .. } => Some(*rid),
+            Revision::RowColumn { revision_id, .. } => Some(*revision_id),
+            Revision::CellChange { revision_id, .. } => Some(*revision_id),
             Revision::Formatting { .. } | Revision::RevisionView { .. } => None,
-            Revision::InsertSheet { rid, .. } => Some(*rid),
-            Revision::RenameSheet { rid, .. } => Some(*rid),
+            Revision::InsertSheet { revision_id, .. } => Some(*revision_id),
+            Revision::RenameSheet { revision_id, .. } => Some(*revision_id),
         }
     }
 
-    /// Gets sId if revision has it
-    pub fn sid(&self) -> Option<usize> {
+    /// Gets sId (sheet id) if revision has it
+    pub fn sheet_id(&self) -> Option<usize> {
         match self {
-            Revision::RowColumn { sid, .. } => Some(*sid),
-            Revision::CellChange { sid, .. } => Some(*sid),
-            Revision::InsertSheet { sid, .. } => Some(*sid),
-            Revision::RenameSheet { sid, .. } => Some(*sid),
-            Revision::Formatting { sid, .. } => Some(*sid),
+            Revision::RowColumn { sheet_id, .. }
+            | Revision::CellChange { sheet_id, .. }
+            | Revision::InsertSheet { sheet_id, .. }
+            | Revision::RenameSheet { sheet_id, .. }
+            | Revision::Formatting { sheet_id, .. } => Some(*sheet_id),
             Revision::RevisionView { .. } => None,
         }
     }
@@ -264,7 +264,7 @@ pub struct RevisionLog {
 
 impl RevisionLog {
     /// Gets max revision id of revision log
-    pub fn max_rid(&self) -> Option<usize> {
+    pub fn max_revision_id(&self) -> Option<usize> {
         let max_rid = self
             .revisions
             .iter()
@@ -276,7 +276,7 @@ impl RevisionLog {
     }
 
     /// Gets min revision id of revision log
-    pub fn min_rid(&self) -> Option<usize> {
+    pub fn min_revision_id(&self) -> Option<usize> {
         let min_rid = self
             .revisions
             .iter()
