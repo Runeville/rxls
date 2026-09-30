@@ -119,7 +119,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 formatting,
             } => {
                 s.push_str(&format!(
-                    r#"<rfmt sheetId="{}" sqref="{}" start="{}" lenght="{}">"#,
+                    r#"<rfmt sheetId="{}" sqref="{}" start="{}" length="{}">"#,
                     sheet_id, address, start, length
                 ));
                 if let Some(formatting) = formatting {
