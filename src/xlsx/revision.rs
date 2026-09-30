@@ -115,8 +115,8 @@ enum RevisionBuilder {
     },
     Formatting {
         sheet_id: usize,
-        start: usize,
-        length: usize,
+        start: Option<usize>,
+        length: Option<usize>,
         address: String,
         formatting: Option<RevisionDifferentialFormat>,
     },
@@ -371,12 +371,8 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         sheet_id: attr(&e, b"sheetId")
                             .and_then(|value| value.parse::<usize>().ok())
                             .unwrap_or_default(),
-                        start: attr(&e, b"start")
-                            .and_then(|value| value.parse::<usize>().ok())
-                            .unwrap_or_default(),
-                        length: attr(&e, b"length")
-                            .and_then(|value| value.parse::<usize>().ok())
-                            .unwrap_or_default(),
+                        start: attr(&e, b"start").and_then(|value| value.parse::<usize>().ok()),
+                        length: attr(&e, b"length").and_then(|value| value.parse::<usize>().ok()),
                         address: attr(&e, b"sqref").unwrap_or_default(),
                         formatting: None,
                     });

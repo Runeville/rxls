@@ -118,10 +118,18 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 address,
                 formatting,
             } => {
+                let start = start
+                    .map(|v| format!(r#" start="{v}""#))
+                    .unwrap_or_default();
+
+                let length = length
+                    .map(|v| format!(r#" length="{v}""#))
+                    .unwrap_or_default();
+
                 s.push_str(&format!(
-                    r#"<rfmt sheetId="{}" sqref="{}" start="{}" length="{}">"#,
-                    sheet_id, address, start, length
+                    r#"<rfmt sheetId="{sheet_id}" sqref="{address}"{start}{length}>"#
                 ));
+
                 if let Some(formatting) = formatting {
                     s.push_str("<dxf>");
 
