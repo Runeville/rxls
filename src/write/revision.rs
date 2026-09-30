@@ -145,7 +145,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                             if underline {
                                 s.push_str("<u/>");
                             } else {
-                                s.push_str(r#"<u val="0"/>"#);
+                                s.push_str(r#"<u val="none"/>"#);
                             }
                         }
                         if let Some(strike) = font.strikethrough {
