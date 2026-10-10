@@ -246,6 +246,10 @@ fn push_changes(s: &mut String, changes: &[RevisionChange]) {
                             s.push_str(&format!(r#"<nc r="{}">"#, address));
                             s.push_str(&format!("<v>{}</v>", number));
                         }
+                        Cell::Bool(boolean) => {
+                            s.push_str(&format!(r#"<nc r="{}" t="b">"#, address));
+                            s.push_str(&format!("<v>{}</v>", if *boolean { "1" } else { "0" }));
+                        }
                         _ => {}
                     },
                     None => {
@@ -272,6 +276,10 @@ fn push_changes(s: &mut String, changes: &[RevisionChange]) {
                     Cell::Number(number) => {
                         s.push_str(&format!(r#"<oc r="{}">"#, address));
                         s.push_str(&format!("<v>{}</v>", number));
+                    }
+                    Cell::Bool(boolean) => {
+                        s.push_str(&format!(r#"<oc r="{}" t="b">"#, address));
+                        s.push_str(&format!("<v>{}</v>", if *boolean { "1" } else { "0" }));
                     }
                     _ => {}
                 }
