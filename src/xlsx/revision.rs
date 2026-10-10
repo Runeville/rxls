@@ -28,10 +28,12 @@ enum RevisionChangeBuilder {
     NewCell {
         address: String,
         value: Option<Cell>,
+        is_bool: bool,
     },
     OldCell {
         address: String,
         value: Option<Cell>,
+        is_bool: bool,
     },
     RowColumn {
         sheet_id: usize,
@@ -53,13 +55,15 @@ impl RevisionChangeBuilder {
                     changes: changes.into_iter().filter_map(|c| c.build()).collect(),
                 })
             }
-            RevisionChangeBuilder::NewCell { address, value } => {
+            RevisionChangeBuilder::NewCell { address, value, .. } => {
                 Some(RevisionChange::NewCell { address, value })
             }
-            RevisionChangeBuilder::OldCell { address, value } => Some(RevisionChange::OldCell {
-                address,
-                value: value?,
-            }),
+            RevisionChangeBuilder::OldCell { address, value, .. } => {
+                Some(RevisionChange::OldCell {
+                    address,
+                    value: value?,
+                })
+            }
             RevisionChangeBuilder::RowColumn {
                 action,
                 address,
@@ -382,6 +386,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     let change = RevisionChangeBuilder::NewCell {
                         value: None,
                         address: attr(&e, b"r").unwrap_or_default(),
+                        is_bool: attr(&e, b"t").is_some_and(|value| value == "b"),
                     };
                     changes_stack.push(change);
                 }
@@ -390,6 +395,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     let change = RevisionChangeBuilder::OldCell {
                         value: None,
                         address: attr(&e, b"r").unwrap_or_default(),
+                        is_bool: attr(&e, b"t").is_some_and(|value| value == "b"),
                     };
                     changes_stack.push(change);
                 }
@@ -505,6 +511,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         RevisionChangeBuilder::NewCell {
                             address: attr(&e, b"r").unwrap_or_default(),
                             value: None,
+                            is_bool: attr(&e, b"t").is_some_and(|value| value == "b"),
                         },
                     );
                 }
@@ -587,11 +594,24 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     if let Some(current_change) = &mut changes_stack.last_mut() {
                         match state {
                             ParserState::V => {
-                                if let RevisionChangeBuilder::NewCell { value, .. }
-                                | RevisionChangeBuilder::OldCell { value, .. } = current_change
+                                if let RevisionChangeBuilder::NewCell { value, is_bool, .. }
+                                | RevisionChangeBuilder::OldCell { value, is_bool, .. } =
+                                    current_change
                                 {
                                     let new_value = text_of(&e);
-                                    if let Ok(new_value) = new_value.parse::<f64>() {
+                                    if *is_bool {
+                                        match new_value.parse::<u8>() {
+                                            Ok(new_value) => {
+                                                match new_value {
+                                                    0 => *value = Some(Cell::Bool(false)),
+                                                    1 => *value = Some(Cell::Bool(true)),
+                                                    _ => todo!(), // TODO: add an error
+                                                }
+                                            }
+
+                                            Err(_) => todo!(), // TODO: add an error
+                                        }
+                                    } else if let Ok(new_value) = new_value.parse::<f64>() {
                                         *value = Some(Cell::Number(new_value));
                                     } else {
                                         *value = Some(Cell::Text(new_value));
