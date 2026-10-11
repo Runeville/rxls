@@ -225,7 +225,6 @@ pub(super) fn revision_headers_rels(n_revision_logs: usize) -> String {
     s
 }
 
-#[allow(clippy::single_match)]
 fn push_changes(s: &mut String, changes: &[RevisionChange]) {
     for change in changes {
         match change {
@@ -284,6 +283,27 @@ fn push_changes(s: &mut String, changes: &[RevisionChange]) {
                     _ => {}
                 }
                 s.push_str("</oc>");
+            }
+
+            RevisionChange::NewDifferentialFormat(formatting) => {
+                s.push_str("<ndxf>");
+                if let Some(number_format) = &formatting.number_format {
+                    s.push_str(&format!(
+                        r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
+                        number_format.number_format_id, number_format.format_code
+                    ));
+                }
+                s.push_str("</ndxf>");
+            }
+            RevisionChange::OldDifferentialFormat(formatting) => {
+                s.push_str("<odxf>");
+                if let Some(number_format) = &formatting.number_format {
+                    s.push_str(&format!(
+                        r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
+                        number_format.number_format_id, number_format.format_code
+                    ));
+                }
+                s.push_str("</odxf>");
             }
             _ => {}
         }
