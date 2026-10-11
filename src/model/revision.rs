@@ -155,10 +155,13 @@ pub enum Revision {
         /// Changes
         changes: Vec<RevisionChange>,
         /// odxf
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         odxf_flag: Option<bool>,
         /// dxf
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         dxf_flag: Option<bool>,
         /// numFmtId
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         number_format_id: Option<u16>,
     },
     /// Format cell
@@ -166,12 +169,15 @@ pub enum Revision {
         /// sId
         sheet_id: usize,
         /// Start indicates where to apply to apply the formatting on the string
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         start: Option<usize>,
         /// Length indicates where to apply to apply the formatting on the string
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         length: Option<usize>,
         /// Address of formatted cell
         address: String,
         /// Action type
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         formatting: Option<DifferentialFormat>,
     },
     /// <rcv> revision custom view changes
@@ -237,6 +243,7 @@ impl Revision {
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct SheetName {
     /// Name of the workbook
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub workbook_name: Option<String>,
     /// Name of the sheet
     pub name: String,
@@ -339,8 +346,10 @@ pub struct User {
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct DifferentialFormat {
     /// <font> font formatting
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub font: Option<Font>,
     /// <numFmt> number format
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub number_format: Option<NumberFormat>,
 }
 
@@ -359,13 +368,18 @@ pub struct NumberFormat {
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Font {
     /// <b> bold
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub bold: Option<bool>,
     /// <i> italic
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub italic: Option<bool>,
     /// <strike> strikethrough
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub strikethrough: Option<bool>,
     /// <u> underline
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub underline: Option<bool>,
     /// <sz> font size
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub size: Option<f32>,
 }
