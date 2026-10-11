@@ -99,6 +99,10 @@ pub enum RevisionChange {
         /// Changes
         changes: Vec<RevisionChange>,
     },
+    /// <ndxf> new differential format
+    NewDifferentialFormat(DifferentialFormat),
+    /// <odxf> old differential format
+    OldDifferentialFormat(DifferentialFormat),
 }
 
 /// One revision inside revisionLog
@@ -303,11 +307,23 @@ pub struct User {
 }
 
 /// <rfmt> formatting
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct DifferentialFormat {
     /// <font> font formatting
     pub font: Option<Font>,
+    /// <numFmt> number format
+    pub number_format: Option<NumberFormat>,
+}
+
+/// <numFmt> number format
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct NumberFormat {
+    /// numFmtId
+    pub number_format_id: u16,
+    /// formatCode
+    pub format_code: String,
 }
 
 /// <font> possible inner tags
