@@ -42,6 +42,28 @@ impl fmt::Display for RevisionRowColumnAction {
     }
 }
 
+impl TryFrom<&str> for RevisionRowColumnAction {
+    type Error = &'static str;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        match s {
+            "insertRow" => Ok(Self::InsertRow),
+            "deleteRow" => Ok(Self::DeleteRow),
+            "insertCol" => Ok(Self::InsertCol),
+            "deleteCol" => Ok(Self::DeleteCol),
+            _ => Err("invalid value for RevisionRowColumnAction"),
+        }
+    }
+}
+
+impl TryFrom<String> for RevisionRowColumnAction {
+    type Error = &'static str;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::try_from(s.as_str())
+    }
+}
+
 /// Enum for `RevisionChangeEnum::RevisionView.action`
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
