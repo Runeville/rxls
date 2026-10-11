@@ -88,6 +88,7 @@ impl fmt::Display for RevisionViewAction {
 /// In revisionLog this
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", serde(tag = "type"))]
 pub enum RevisionChange {
     /// <nc> new cell
     NewCell {
@@ -130,6 +131,7 @@ pub enum RevisionChange {
 /// One revision inside revisionLog
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", serde(tag = "type"))]
 pub enum Revision {
     /// Insert or delete row or column
     RowColumn {
