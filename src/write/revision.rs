@@ -55,10 +55,21 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 revision_id,
                 sheet_id,
                 changes,
+                odxf_flag,
+                dxf_flag,
+                number_format_id,
             } => {
+                let odxf_s = odxf_flag.map_or(String::new(), |flag| {
+                    format!(r#" odxf="{}""#, u8::from(flag))
+                });
+                let dxf_s = dxf_flag.map_or(String::new(), |flag| {
+                    format!(r#" dxf="{}""#, u8::from(flag))
+                });
+                let num_fmt_s =
+                    number_format_id.map_or(String::new(), |id| format!(r#" numFmtId="{}""#, id));
+
                 s.push_str(&format!(
-                    r#"<rcc rId="{}" sId="{}">"#,
-                    revision_id, sheet_id
+                    r#"<rcc rId="{revision_id}" sId="{sheet_id}"{odxf_s}{dxf_s}{num_fmt_s}>"#,
                 ));
                 push_changes(&mut s, &changes);
                 s.push_str("</rcc>");

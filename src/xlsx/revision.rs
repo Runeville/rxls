@@ -108,6 +108,12 @@ enum RevisionBuilder {
         sheet_id: usize,
         /// Changes
         changes: Vec<RevisionChangeBuilder>,
+        /// odxf
+        odxf_flag: Option<bool>,
+        /// dxf
+        dxf_flag: Option<bool>,
+        /// numFmtId
+        number_format_id: Option<u16>,
     },
     RevisionView {
         guid: String,
@@ -157,10 +163,16 @@ impl RevisionBuilder {
                 revision_id,
                 sheet_id,
                 changes,
+                odxf_flag,
+                dxf_flag,
+                number_format_id,
             } => Some(Revision::CellChange {
                 revision_id,
                 sheet_id,
                 changes: changes.into_iter().filter_map(|c| c.build()).collect(),
+                odxf_flag,
+                dxf_flag,
+                number_format_id,
             }),
             RevisionBuilder::RevisionView { guid, action } => {
                 Some(Revision::RevisionView { guid, action })
@@ -374,6 +386,18 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                 .unwrap_or_default(),
                             sheet_id,
                             changes: Vec::new(),
+                            odxf_flag: attr(&e, b"odxf").and_then(|value| match value.as_str() {
+                                "1" => Some(true),
+                                "0" => Some(false),
+                                _ => None,
+                            }),
+                            dxf_flag: attr(&e, b"dxf").and_then(|value| match value.as_str() {
+                                "1" => Some(true),
+                                "0" => Some(false),
+                                _ => None,
+                            }),
+                            number_format_id: attr(&e, b"numFmtId")
+                                .and_then(|v| v.parse::<u16>().ok()),
                         })
                     }
                 }

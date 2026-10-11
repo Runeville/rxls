@@ -154,6 +154,12 @@ pub enum Revision {
         sheet_id: usize,
         /// Changes
         changes: Vec<RevisionChange>,
+        /// odxf
+        odxf_flag: Option<bool>,
+        /// dxf
+        dxf_flag: Option<bool>,
+        /// numFmtId
+        number_format_id: Option<u16>,
     },
     /// Format cell
     Formatting {
