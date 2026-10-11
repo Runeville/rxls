@@ -130,7 +130,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
                 &mut zip,
                 &normalize_part_target(&workbook_path, "/xl/revisions/userNames.xml"),
             ),
-            RelatedPartRead::Invalid => None,
+            RelatedPartRead::Invalid => return Err(Error::Zip("invalid user-names relationship")),
         };
     let revision_headers_xml = match workbook_related_part(
         &mut zip,
@@ -143,7 +143,9 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
             &mut zip,
             &normalize_part_target(&workbook_path, "/xl/revisions/revisionHeaders.xml"),
         ),
-        RelatedPartRead::Invalid => None,
+        RelatedPartRead::Invalid => {
+            return Err(Error::Zip("invalid revision-headers relationship"))
+        }
     };
     let theme = match workbook_related_part(&mut zip, &workbook_path, &workbook_rels_xml, "theme") {
         RelatedPartRead::Present(xml) => parse_theme(&xml),
