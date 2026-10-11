@@ -4,7 +4,7 @@ use quick_xml::Reader;
 use super::{attr, local, text_of};
 use crate::{
     Cell, Revision, RevisionChange, RevisionDifferentialFormat, RevisionFont, RevisionLog,
-    RevisionRowColumnAction, RevisionViewAction, SheetName, User,
+    RevisionNumberFormat, RevisionRowColumnAction, RevisionViewAction, SheetName, User,
 };
 
 #[derive(PartialEq)]
@@ -44,6 +44,8 @@ enum RevisionChangeBuilder {
         /// Changes
         changes: Vec<RevisionChangeBuilder>,
     },
+    NewDifferentialFormat(RevisionDifferentialFormat),
+    OldDifferentialFormat(RevisionDifferentialFormat),
 }
 
 impl RevisionChangeBuilder {
@@ -75,6 +77,12 @@ impl RevisionChangeBuilder {
                 sheet_id,
                 changes: changes.into_iter().filter_map(|c| c.build()).collect(),
             }),
+            RevisionChangeBuilder::NewDifferentialFormat(formatting) => {
+                Some(RevisionChange::NewDifferentialFormat(formatting))
+            }
+            RevisionChangeBuilder::OldDifferentialFormat(formatting) => {
+                Some(RevisionChange::OldDifferentialFormat(formatting))
+            }
         }
     }
 }
@@ -403,9 +411,22 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 b"dxf" => {
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::Formatting { formatting, .. } = current_revision {
-                            *formatting = Some(RevisionDifferentialFormat { font: None });
+                            *formatting = Some(RevisionDifferentialFormat::default());
                         }
                     }
+                }
+
+                b"ndxf" => {
+                    let change = RevisionChangeBuilder::NewDifferentialFormat(
+                        RevisionDifferentialFormat::default(),
+                    );
+                    changes_stack.push(change);
+                }
+                b"odxf" => {
+                    let change = RevisionChangeBuilder::OldDifferentialFormat(
+                        RevisionDifferentialFormat::default(),
+                    );
+                    changes_stack.push(change);
                 }
 
                 b"font" => {
@@ -438,13 +459,10 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         .and_then(|value| value.parse::<usize>().ok())
                         .unwrap_or_default();
                     // TODO: probably should throw an error if action is not known
-                    let action = match attr(&e, b"action").unwrap_or_default().as_str() {
-                        "insertRow" => RevisionRowColumnAction::InsertRow,
-                        "deleteRow" => RevisionRowColumnAction::DeleteRow,
-                        "insertCol" => RevisionRowColumnAction::InsertCol,
-                        "deleteCol" => RevisionRowColumnAction::DeleteCol,
-                        _ => RevisionRowColumnAction::InsertRow,
-                    };
+                    let action = attr(&e, b"action")
+                        .unwrap_or_default()
+                        .try_into()
+                        .expect("invalid value for RevisionRowColumnAction");
                     if let Some(current_revision) = current_revision.as_mut() {
                         current_revision.push_change(RevisionChangeBuilder::RowColumn {
                             address: attr(&e, b"ref").unwrap_or_default(),
@@ -585,6 +603,23 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         }
                     }
                 }
+                b"numFmt" => {
+                    let number_format_id = attr(&e, b"numFmtId")
+                        .and_then(|value| value.parse::<u16>().ok())
+                        .unwrap_or_default();
+                    let format_code = attr(&e, b"formatCode").unwrap_or_default();
+                    if let Some(current_change) = changes_stack.last_mut() {
+                        if let RevisionChangeBuilder::NewDifferentialFormat(formatting)
+                        | RevisionChangeBuilder::OldDifferentialFormat(formatting) =
+                            current_change
+                        {
+                            formatting.number_format = Some(RevisionNumberFormat {
+                                number_format_id,
+                                format_code,
+                            });
+                        }
+                    }
+                }
 
                 _ => {}
             },
@@ -672,6 +707,21 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     if let Some(last_change) =
                         changes_stack.pop_if(|c| matches!(c, RevisionChangeBuilder::OldCell { .. }))
                     {
+                        current_revision.as_mut().unwrap().push_change(last_change);
+                    }
+                }
+
+                b"ndxf" => {
+                    if let Some(last_change) = changes_stack.pop_if(|c| {
+                        matches!(c, RevisionChangeBuilder::NewDifferentialFormat { .. })
+                    }) {
+                        current_revision.as_mut().unwrap().push_change(last_change);
+                    }
+                }
+                b"odxf" => {
+                    if let Some(last_change) = changes_stack.pop_if(|c| {
+                        matches!(c, RevisionChangeBuilder::OldDifferentialFormat { .. })
+                    }) {
                         current_revision.as_mut().unwrap().push_change(last_change);
                     }
                 }
