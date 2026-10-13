@@ -676,10 +676,8 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                             }
                         }
                     }
-                    Some(ParserState::Font) => {
-                        unreachable!("Font unreachable")
-                    }
-                    None => unreachable!("&None"),
+                    Some(ParserState::Font) => {}
+                    None => {}
                 }
             }
 
