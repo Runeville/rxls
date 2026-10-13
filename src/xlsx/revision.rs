@@ -621,7 +621,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                             {
                                 new_differential_format.number_format = Some(number_format);
                             } else if let Some(old_differential_format) =
-                                cell_change_builder.new_differential_format.as_mut()
+                                cell_change_builder.old_differential_format.as_mut()
                             {
                                 old_differential_format.number_format = Some(number_format);
                             }
