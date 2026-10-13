@@ -358,17 +358,70 @@ impl NumberFormat {
     pub fn try_from_format_code(format_code: String) -> Option<Self> {
         Some(Self {
             number_format_id: match format_code.as_str() {
+                // General
                 "General" => Some(0),
+
+                // Number
                 "0" => Some(1),
                 "0.00" => Some(2),
                 "#,##0" => Some(3),
                 "#,##0.00" => Some(4),
+
+                // Currency
+                r##""$"#,##0_);("$"#,##0)"## => Some(5),
+                r##""$"#,##0_);[Red]("$"#,##0)"## => Some(6),
+                r##""$"#,##0.00_);("$"#,##0.00)"## => Some(7),
+                r##""$"#,##0.00_);[Red]("$"#,##0.00)"## => Some(8),
+
+                // Percentage
                 "0%" => Some(9),
                 "0.00%" => Some(10),
+
+                // Scientific
                 "0.00E+00" => Some(11),
+
+                // Fraction
                 "# ?/?" => Some(12),
                 "# ??/??" => Some(13),
-                "m/d/yyyy" | "mm-dd-yy" => Some(14),
+
+                // Date
+                "mm-dd-yy" | "m/d/yyyy" => Some(14),
+                "d-mmm-yy" => Some(15),
+                "d-mmm" => Some(16),
+                "mmm-yy" => Some(17),
+
+                // Time
+                "h:mm AM/PM" => Some(18),
+                "h:mm:ss AM/PM" => Some(19),
+                "h:mm" => Some(20),
+                "h:mm:ss" => Some(21),
+
+                // Date and time
+                "m/d/yy h:mm" | "m/d/yyyy h:mm" => Some(22),
+
+                // Number with negative formatting
+                "#,##0 ;(#,##0)" | "#,##0_);(#,##0)" => Some(37),
+                "#,##0 ;[Red](#,##0)" | "#,##0_);[Red](#,##0)" => Some(38),
+                "#,##0.00;(#,##0.00)" | "#,##0.00_);(#,##0.00)" => Some(39),
+                "#,##0.00;[Red](#,##0.00)" | "#,##0.00_);[Red](#,##0.00)" => Some(40),
+
+                // Accounting
+                r#"_(* #,##0_);_(* \(#,##0\);_(* "-"_);_(@_)"# => Some(41),
+                r#"_("$"* #,##0_);_("$"* \(#,##0\);_("$"* "-"_);_(@_)"# => Some(42),
+                r#"_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)"# => Some(43),
+                r#"_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)"# => Some(44),
+
+                // Time
+                "mm:ss" => Some(45),
+                "[h]:mm:ss" => Some(46),
+                "mmss.0" | "mm:ss.0" => Some(47),
+
+                // Scientific
+                "##0.0E+0" => Some(48),
+
+                // Text
+                "@" => Some(49),
+
                 _ => None,
             }?,
             format_code,
