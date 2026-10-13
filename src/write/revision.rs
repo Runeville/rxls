@@ -1,5 +1,5 @@
 use crate::write::xml::{NS_AC, NS_MAIN, NS_MC, NS_PKG_REL, NS_R, REL_REVISION_LOG, XML_DECL};
-use crate::{Cell, Revision, RevisionChange, RevisionLog, User};
+use crate::{Cell, Revision, RevisionLog, User};
 
 pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
     let mut s = String::new();
@@ -51,27 +51,115 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
 
     for revision in revision_log.revisions.clone() {
         match revision {
-            Revision::CellChange {
-                revision_id,
-                sheet_id,
-                changes,
-                odxf_flag,
-                dxf_flag,
-                number_format_id,
-            } => {
-                let odxf_s = odxf_flag.map_or(String::new(), |flag| {
-                    format!(r#" odxf="{}""#, u8::from(flag))
-                });
-                let dxf_s = dxf_flag.map_or(String::new(), |flag| {
-                    format!(r#" dxf="{}""#, u8::from(flag))
-                });
-                let num_fmt_s =
-                    number_format_id.map_or(String::new(), |id| format!(r#" numFmtId="{}""#, id));
+            Revision::CellChange(revision_cell_change) => {
+                let address = revision_cell_change.address.as_str();
+                let odxf_s = revision_cell_change
+                    .old_differential_format
+                    .as_ref()
+                    .map_or("", |_| r#" odxf="1""#);
+
+                let dxf_s = revision_cell_change
+                    .new_differential_format
+                    .as_ref()
+                    .map_or("", |_| r#" dxf="1""#);
+
+                let num_fmt_s = revision_cell_change
+                    .new_differential_format
+                    .as_ref()
+                    .and_then(|format| format.number_format.as_ref())
+                    .map(|num_fmt| num_fmt.number_format_id)
+                    .unwrap_or_default();
 
                 s.push_str(&format!(
-                    r#"<rcc rId="{revision_id}" sId="{sheet_id}"{odxf_s}{dxf_s}{num_fmt_s}>"#,
+                    r#"<rcc rId="{}" sId="{}"{odxf_s}{dxf_s}{num_fmt_s}>"#,
+                    revision_cell_change.revision_id, revision_cell_change.sheet_id,
                 ));
-                push_changes(&mut s, &changes);
+
+                // <nc>
+                match &revision_cell_change.new_cell {
+                    Some(value) => match value {
+                        Cell::Text(text) => {
+                            s.push_str(&format!(r#"<nc r="{address}" t="inlineStr">"#));
+                            s.push_str("<is>");
+                            s.push_str(&format!("<t>{}</t>", text));
+                            s.push_str("</is>");
+                        }
+                        Cell::Formula { formula, .. } => {
+                            s.push_str(&format!(r#"<nc r="{address}">"#));
+                            s.push_str(&format!("<f>{}</f>", formula));
+                        }
+                        Cell::Number(number) => {
+                            s.push_str(&format!(r#"<nc r="{address}">"#));
+                            s.push_str(&format!("<v>{}</v>", number));
+                        }
+                        Cell::Bool(boolean) => {
+                            s.push_str(&format!(r#"<nc r="{address}" t="b">"#));
+                            s.push_str(&format!("<v>{}</v>", if *boolean { "1" } else { "0" }));
+                        }
+                        _ => {}
+                    },
+                    None => {
+                        s.push_str(&format!(r#"<nc r="{}"/>"#, address));
+                    }
+                }
+                if revision_cell_change.new_cell.is_some() {
+                    s.push_str("</nc>");
+                }
+
+                // <oc>
+                match &revision_cell_change.old_cell {
+                    Some(Cell::Text(text)) => {
+                        s.push_str(&format!(r#"<oc r="{}" t="inlineStr">"#, address));
+                        s.push_str("<is>");
+                        s.push_str(&format!("<t>{}</t>", text));
+                        s.push_str("</is>");
+                    }
+                    Some(Cell::Formula { formula, .. }) => {
+                        s.push_str(&format!(r#"<oc r="{}">"#, address));
+                        s.push_str(&format!("<f>{}</f>", formula));
+                    }
+                    Some(Cell::Number(number)) => {
+                        s.push_str(&format!(r#"<oc r="{}">"#, address));
+                        s.push_str(&format!("<v>{}</v>", number));
+                    }
+                    Some(Cell::Bool(boolean)) => {
+                        s.push_str(&format!(r#"<oc r="{}" t="b">"#, address));
+                        s.push_str(&format!("<v>{}</v>", if *boolean { "1" } else { "0" }));
+                    }
+                    _ => {}
+                }
+                s.push_str("</oc>");
+
+                // <odxf>
+                match &revision_cell_change.old_differential_format {
+                    Some(format) => {
+                        s.push_str("<odxf>");
+                        if let Some(num_fmt) = &format.number_format.as_ref() {
+                            s.push_str(&format!(
+                                r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
+                                num_fmt.number_format_id, num_fmt.format_code
+                            ));
+                        }
+                        s.push_str("</odxf>");
+                    }
+                    None => {}
+                }
+
+                // <ndxf>
+                match &revision_cell_change.new_differential_format {
+                    Some(format) => {
+                        s.push_str("<ndxf>");
+                        if let Some(number_format) = &format.number_format {
+                            s.push_str(&format!(
+                                r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
+                                number_format.number_format_id, number_format.format_code
+                            ));
+                        }
+                        s.push_str("</ndxf>");
+                    }
+                    None => {}
+                }
+
                 s.push_str("</rcc>");
             }
             Revision::RowColumn {
@@ -90,7 +178,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     s.push_str(&format!(
                         r#"<rrc rId="{revision_id}" sId="{sheet_id}" action="{action}" ref="{address}" eol="{}">"#, if eol { "1" } else { "0" }
                     ));
-                    push_changes(&mut s, &changes);
+                    todo!("RevisionChanges restructure");
                     s.push_str("</rrc>");
                 }
             }
@@ -241,89 +329,4 @@ pub(super) fn revision_headers_rels(n_revision_logs: usize) -> String {
     }
     s.push_str("</Relationships>");
     s
-}
-
-fn push_changes(s: &mut String, changes: &[RevisionChange]) {
-    for change in changes {
-        match change {
-            RevisionChange::NewCell { address, value } => {
-                match value {
-                    Some(value) => match value {
-                        Cell::Text(text) => {
-                            s.push_str(&format!(r#"<nc r="{}" t="inlineStr">"#, address));
-                            s.push_str("<is>");
-                            s.push_str(&format!("<t>{}</t>", text));
-                            s.push_str("</is>");
-                        }
-                        Cell::Formula { formula, .. } => {
-                            s.push_str(&format!(r#"<nc r="{}">"#, address));
-                            s.push_str(&format!("<f>{}</f>", formula));
-                        }
-                        Cell::Number(number) => {
-                            s.push_str(&format!(r#"<nc r="{}">"#, address));
-                            s.push_str(&format!("<v>{}</v>", number));
-                        }
-                        Cell::Bool(boolean) => {
-                            s.push_str(&format!(r#"<nc r="{}" t="b">"#, address));
-                            s.push_str(&format!("<v>{}</v>", if *boolean { "1" } else { "0" }));
-                        }
-                        _ => {}
-                    },
-                    None => {
-                        s.push_str(&format!(r#"<nc r="{}"/>"#, address));
-                    }
-                }
-                if value.is_some() {
-                    s.push_str("</nc>");
-                }
-            }
-
-            RevisionChange::OldCell { address, value } => {
-                match value {
-                    Cell::Text(text) => {
-                        s.push_str(&format!(r#"<oc r="{}" t="inlineStr">"#, address));
-                        s.push_str("<is>");
-                        s.push_str(&format!("<t>{}</t>", text));
-                        s.push_str("</is>");
-                    }
-                    Cell::Formula { formula, .. } => {
-                        s.push_str(&format!(r#"<oc r="{}">"#, address));
-                        s.push_str(&format!("<f>{}</f>", formula));
-                    }
-                    Cell::Number(number) => {
-                        s.push_str(&format!(r#"<oc r="{}">"#, address));
-                        s.push_str(&format!("<v>{}</v>", number));
-                    }
-                    Cell::Bool(boolean) => {
-                        s.push_str(&format!(r#"<oc r="{}" t="b">"#, address));
-                        s.push_str(&format!("<v>{}</v>", if *boolean { "1" } else { "0" }));
-                    }
-                    _ => {}
-                }
-                s.push_str("</oc>");
-            }
-
-            RevisionChange::NewDifferentialFormat(formatting) => {
-                s.push_str("<ndxf>");
-                if let Some(number_format) = &formatting.number_format {
-                    s.push_str(&format!(
-                        r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
-                        number_format.number_format_id, number_format.format_code
-                    ));
-                }
-                s.push_str("</ndxf>");
-            }
-            RevisionChange::OldDifferentialFormat(formatting) => {
-                s.push_str("<odxf>");
-                if let Some(number_format) = &formatting.number_format {
-                    s.push_str(&format!(
-                        r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
-                        number_format.number_format_id, number_format.format_code
-                    ));
-                }
-                s.push_str("</odxf>");
-            }
-            _ => {}
-        }
-    }
 }

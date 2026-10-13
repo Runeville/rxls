@@ -3,8 +3,9 @@ use quick_xml::Reader;
 
 use super::{attr, local, text_of};
 use crate::{
-    Cell, Revision, RevisionChange, RevisionDifferentialFormat, RevisionFont, RevisionLog,
-    RevisionNumberFormat, RevisionRowColumnAction, RevisionViewAction, SheetName, User,
+    Cell, Revision, RevisionCellChange, RevisionChange, RevisionDifferentialFormat, RevisionFont,
+    RevisionLog, RevisionNumberFormat, RevisionRowColumnAction, RevisionViewAction, SheetName,
+    User,
 };
 
 #[derive(PartialEq)]
@@ -21,20 +22,7 @@ enum ParserState {
 
 #[derive(Debug, Clone)]
 enum RevisionChangeBuilder {
-    CellChange {
-        sheet_id: usize,
-        changes: Vec<RevisionChangeBuilder>,
-    },
-    NewCell {
-        address: String,
-        value: Option<Cell>,
-        is_bool: bool,
-    },
-    OldCell {
-        address: String,
-        value: Option<Cell>,
-        is_bool: bool,
-    },
+    CellChange(RevisionCellChangeBuilder),
     RowColumn {
         sheet_id: usize,
         /// Action taken like Insert or Delete
@@ -51,20 +39,8 @@ enum RevisionChangeBuilder {
 impl RevisionChangeBuilder {
     pub fn build(self) -> Option<RevisionChange> {
         match self {
-            RevisionChangeBuilder::CellChange { sheet_id, changes } => {
-                Some(RevisionChange::CellChange {
-                    sheet_id,
-                    changes: changes.into_iter().filter_map(|c| c.build()).collect(),
-                })
-            }
-            RevisionChangeBuilder::NewCell { address, value, .. } => {
-                Some(RevisionChange::NewCell { address, value })
-            }
-            RevisionChangeBuilder::OldCell { address, value, .. } => {
-                Some(RevisionChange::OldCell {
-                    address,
-                    value: value?,
-                })
+            RevisionChangeBuilder::CellChange(cell_change_builder) => {
+                Some(RevisionChange::CellChange(cell_change_builder.build()?))
             }
             RevisionChangeBuilder::RowColumn {
                 action,
@@ -103,18 +79,7 @@ enum RevisionBuilder {
         eol: bool,
     },
     /// Change cell
-    CellChange {
-        revision_id: usize,
-        sheet_id: usize,
-        /// Changes
-        changes: Vec<RevisionChangeBuilder>,
-        /// odxf
-        odxf_flag: Option<bool>,
-        /// dxf
-        dxf_flag: Option<bool>,
-        /// numFmtId
-        number_format_id: Option<u16>,
-    },
+    CellChange(RevisionCellChangeBuilder),
     RevisionView {
         guid: String,
         action: RevisionViewAction,
@@ -158,22 +123,9 @@ impl RevisionBuilder {
                 changes: changes.into_iter().filter_map(|c| c.build()).collect(),
                 eol,
             }),
-
-            RevisionBuilder::CellChange {
-                revision_id,
-                sheet_id,
-                changes,
-                odxf_flag,
-                dxf_flag,
-                number_format_id,
-            } => Some(Revision::CellChange {
-                revision_id,
-                sheet_id,
-                changes: changes.into_iter().filter_map(|c| c.build()).collect(),
-                odxf_flag,
-                dxf_flag,
-                number_format_id,
-            }),
+            RevisionBuilder::CellChange(cell_change_builder) => {
+                Some(Revision::CellChange(cell_change_builder.build()?))
+            }
             RevisionBuilder::RevisionView { guid, action } => {
                 Some(Revision::RevisionView { guid, action })
             }
@@ -217,13 +169,44 @@ impl RevisionBuilder {
 
     pub fn push_change(&mut self, change: RevisionChangeBuilder) {
         match self {
-            RevisionBuilder::RowColumn { changes, .. }
-            | RevisionBuilder::CellChange { changes, .. } => changes.push(change),
-            RevisionBuilder::RevisionView { .. }
+            RevisionBuilder::RowColumn { changes, .. } => changes.push(change),
+            RevisionBuilder::CellChange(..)
+            | RevisionBuilder::RevisionView { .. }
             | RevisionBuilder::InsertSheet { .. }
-            | RevisionBuilder::Formatting { .. } => {}
-            RevisionBuilder::RenameSheet { .. } => {}
+            | RevisionBuilder::Formatting { .. }
+            | RevisionBuilder::RenameSheet { .. } => {}
         }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+struct RevisionCellChangeBuilder {
+    /// rId
+    revision_id: usize,
+    /// sId
+    sheet_id: usize,
+    /// address
+    address: Option<String>,
+    /// <nc>
+    new_cell: Option<Cell>,
+    /// <oc>
+    old_cell: Option<Cell>,
+    /// <odxf>
+    old_differential_format: Option<RevisionDifferentialFormat>,
+    /// <ndxf>
+    new_differential_format: Option<RevisionDifferentialFormat>,
+}
+impl RevisionCellChangeBuilder {
+    pub fn build(self) -> Option<RevisionCellChange> {
+        Some(RevisionCellChange {
+            revision_id: self.revision_id,
+            sheet_id: self.sheet_id,
+            address: self.address?,
+            new_cell: self.new_cell,
+            old_cell: self.old_cell,
+            new_differential_format: self.new_differential_format,
+            old_differential_format: self.old_differential_format,
+        })
     }
 }
 
@@ -374,31 +357,21 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         .and_then(|value| value.parse::<usize>().ok())
                         .unwrap_or_default();
                     if current_revision.is_some() {
-                        let current_change = RevisionChangeBuilder::CellChange {
-                            sheet_id,
-                            changes: Vec::new(),
-                        };
+                        let current_change =
+                            RevisionChangeBuilder::CellChange(RevisionCellChangeBuilder {
+                                sheet_id,
+                                ..Default::default()
+                            });
                         changes_stack.push(current_change);
                     } else {
-                        current_revision = Some(RevisionBuilder::CellChange {
-                            revision_id: attr(&e, b"rId")
-                                .and_then(|value| value.parse::<usize>().ok())
-                                .unwrap_or_default(),
-                            sheet_id,
-                            changes: Vec::new(),
-                            odxf_flag: attr(&e, b"odxf").and_then(|value| match value.as_str() {
-                                "1" => Some(true),
-                                "0" => Some(false),
-                                _ => None,
-                            }),
-                            dxf_flag: attr(&e, b"dxf").and_then(|value| match value.as_str() {
-                                "1" => Some(true),
-                                "0" => Some(false),
-                                _ => None,
-                            }),
-                            number_format_id: attr(&e, b"numFmtId")
-                                .and_then(|v| v.parse::<u16>().ok()),
-                        })
+                        current_revision =
+                            Some(RevisionBuilder::CellChange(RevisionCellChangeBuilder {
+                                revision_id: attr(&e, b"rId")
+                                    .and_then(|value| value.parse::<usize>().ok())
+                                    .unwrap_or_default(),
+                                sheet_id,
+                                ..Default::default()
+                            }))
                     }
                 }
 
@@ -415,21 +388,23 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 }
 
                 b"nc" => {
-                    let change = RevisionChangeBuilder::NewCell {
-                        value: None,
-                        address: attr(&e, b"r").unwrap_or_default(),
-                        is_bool: attr(&e, b"t").is_some_and(|value| value == "b"),
-                    };
-                    changes_stack.push(change);
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        let is_bool = attr(&e, b"t").is_some_and(|value| value == "b");
+                        if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
+                            cell_change_builder.address = attr(&e, b"r");
+                            cell_change_builder.new_cell = is_bool.then_some(Cell::Bool(false));
+                        }
+                    }
                 }
 
                 b"oc" => {
-                    let change = RevisionChangeBuilder::OldCell {
-                        value: None,
-                        address: attr(&e, b"r").unwrap_or_default(),
-                        is_bool: attr(&e, b"t").is_some_and(|value| value == "b"),
-                    };
-                    changes_stack.push(change);
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        let is_bool = attr(&e, b"t").is_some_and(|value| value == "b");
+                        if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
+                            cell_change_builder.address = attr(&e, b"r");
+                            cell_change_builder.old_cell = is_bool.then_some(Cell::Bool(false));
+                        }
+                    }
                 }
 
                 b"dxf" => {
@@ -549,13 +524,11 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     });
                 }
                 b"nc" => {
-                    current_revision.as_mut().unwrap().push_change(
-                        RevisionChangeBuilder::NewCell {
-                            address: attr(&e, b"r").unwrap_or_default(),
-                            value: None,
-                            is_bool: attr(&e, b"t").is_some_and(|value| value == "b"),
-                        },
-                    );
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
+                            cell_change_builder.address = attr(&e, b"r");
+                        }
+                    }
                 }
 
                 b"b" => {
@@ -649,54 +622,61 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
             },
 
             Ok(Event::Text(e)) => {
-                if let Some(state) = parser_state.as_ref() {
-                    if let Some(current_change) = &mut changes_stack.last_mut() {
-                        match state {
-                            ParserState::V => {
-                                if let RevisionChangeBuilder::NewCell { value, is_bool, .. }
-                                | RevisionChangeBuilder::OldCell { value, is_bool, .. } =
-                                    current_change
-                                {
-                                    let new_value = text_of(&e);
-                                    if *is_bool {
-                                        match new_value.parse::<u8>() {
-                                            Ok(new_value) => {
-                                                match new_value {
-                                                    0 => *value = Some(Cell::Bool(false)),
-                                                    1 => *value = Some(Cell::Bool(true)),
-                                                    _ => todo!(), // TODO: add an error
-                                                }
-                                            }
+                match parser_state.as_ref() {
+                    Some(ParserState::V) => {
+                        if let Some(current_revision) = current_revision.as_mut() {
+                            if let RevisionBuilder::CellChange(cell_change_builder) =
+                                current_revision
+                            {
+                                let new_value = text_of(&e);
 
-                                            Err(_) => todo!(), // TODO: add an error
+                                if matches!(cell_change_builder.new_cell, Some(Cell::Bool(..))) {
+                                    match new_value.parse::<u8>() {
+                                        Ok(new_value) => {
+                                            match new_value {
+                                                0 => {
+                                                    cell_change_builder.new_cell =
+                                                        Some(Cell::Bool(false))
+                                                }
+                                                1 => {
+                                                    cell_change_builder.new_cell =
+                                                        Some(Cell::Bool(true))
+                                                }
+                                                _ => todo!(), // TODO: add an error
+                                            }
                                         }
-                                    } else if let Ok(new_value) = new_value.parse::<f64>() {
-                                        *value = Some(Cell::Number(new_value));
-                                    } else {
-                                        *value = Some(Cell::Text(new_value));
+                                        Err(_) => todo!(), // TODO: add an error
                                     }
+                                } else if let Ok(new_value) = new_value.parse::<f64>() {
+                                    cell_change_builder.new_cell = Some(Cell::Number(new_value));
+                                } else {
+                                    cell_change_builder.new_cell = Some(Cell::Text(new_value));
                                 }
                             }
-                            ParserState::T => {
-                                if let RevisionChangeBuilder::NewCell { value, .. }
-                                | RevisionChangeBuilder::OldCell { value, .. } = current_change
-                                {
-                                    *value = Some(Cell::Text(text_of(&e)));
-                                }
-                            }
-                            ParserState::F => {
-                                if let RevisionChangeBuilder::NewCell { value, .. }
-                                | RevisionChangeBuilder::OldCell { value, .. } = current_change
-                                {
-                                    *value = Some(Cell::Formula {
-                                        formula: text_of(&e),
-                                        cached: Box::new(Cell::Text("".to_string())),
-                                    });
-                                }
-                            }
-                            _ => {}
                         }
                     }
+                    Some(ParserState::T) => {
+                        if let Some(current_revision) = current_revision.as_mut() {
+                            if let RevisionBuilder::CellChange(cell_change_builder) =
+                                current_revision
+                            {
+                                cell_change_builder.new_cell = Some(Cell::Text(text_of(&e)));
+                            }
+                        }
+                    }
+                    Some(ParserState::F) => {
+                        if let Some(current_revision) = current_revision.as_mut() {
+                            if let RevisionBuilder::CellChange(cell_change_builder) =
+                                current_revision
+                            {
+                                cell_change_builder.new_cell = Some(Cell::Formula {
+                                    formula: text_of(&e),
+                                    cached: Box::new(Cell::Text("".to_string())),
+                                });
+                            }
+                        }
+                    }
+                    _ => unreachable!(),
                 }
             }
 
@@ -716,22 +696,6 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 b"rfmt" => {
                     if let Some(current_revision) = current_revision.take() {
                         revisions.push(current_revision);
-                    }
-                }
-
-                b"nc" => {
-                    if let Some(last_change) =
-                        changes_stack.pop_if(|c| matches!(c, RevisionChangeBuilder::NewCell { .. }))
-                    {
-                        current_revision.as_mut().unwrap().push_change(last_change);
-                    }
-                }
-
-                b"oc" => {
-                    if let Some(last_change) =
-                        changes_stack.pop_if(|c| matches!(c, RevisionChangeBuilder::OldCell { .. }))
-                    {
-                        current_revision.as_mut().unwrap().push_change(last_change);
                     }
                 }
 

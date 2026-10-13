@@ -90,27 +90,8 @@ impl fmt::Display for RevisionViewAction {
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "serde", serde(tag = "type"))]
 pub enum RevisionChange {
-    /// <nc> new cell
-    NewCell {
-        /// ref
-        address: String,
-        /// <v> value. If None, the cell was cleared.
-        value: Option<Cell>,
-    },
-    /// <oc> old cell
-    OldCell {
-        /// ref
-        address: String,
-        /// <v> value
-        value: Cell,
-    },
     /// <rcc> cell change
-    CellChange {
-        /// sid
-        sheet_id: usize,
-        /// changes
-        changes: Vec<RevisionChange>,
-    },
+    CellChange(RevisionCellChange),
     /// <rrc> row/column change
     RowColumn {
         /// sId
@@ -149,23 +130,7 @@ pub enum Revision {
         eol: bool,
     },
     /// Change cell
-    CellChange {
-        /// rId
-        revision_id: usize,
-        /// sId
-        sheet_id: usize,
-        /// Changes
-        changes: Vec<RevisionChange>,
-        /// odxf
-        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-        odxf_flag: Option<bool>,
-        /// dxf
-        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-        dxf_flag: Option<bool>,
-        /// numFmtId
-        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-        number_format_id: Option<u16>,
-    },
+    CellChange(RevisionCellChange),
     /// Format cell
     Formatting {
         /// sId
@@ -215,12 +180,35 @@ pub enum Revision {
     },
 }
 
+/// <rcc> revision used to change cell value (may contain formatting, but value is always present)
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct RevisionCellChange {
+    /// rId
+    pub revision_id: usize,
+    /// sId
+    pub sheet_id: usize,
+    /// address
+    pub address: String,
+    /// <nc>
+    pub new_cell: Option<Cell>,
+    /// <oc>
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub old_cell: Option<Cell>,
+    /// <odxf>
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub old_differential_format: Option<DifferentialFormat>,
+    /// <ndxf>
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub new_differential_format: Option<DifferentialFormat>,
+}
+
 impl Revision {
     /// Gets rId of revision if revision has it
     pub fn id(&self) -> Option<usize> {
         match self {
             Revision::RowColumn { revision_id, .. } => Some(*revision_id),
-            Revision::CellChange { revision_id, .. } => Some(*revision_id),
+            Revision::CellChange(cell_change) => Some(cell_change.revision_id),
             Revision::Formatting { .. } | Revision::RevisionView { .. } => None,
             Revision::InsertSheet { revision_id, .. } => Some(*revision_id),
             Revision::RenameSheet { revision_id, .. } => Some(*revision_id),
@@ -231,10 +219,10 @@ impl Revision {
     pub fn sheet_id(&self) -> Option<usize> {
         match self {
             Revision::RowColumn { sheet_id, .. }
-            | Revision::CellChange { sheet_id, .. }
             | Revision::InsertSheet { sheet_id, .. }
             | Revision::RenameSheet { sheet_id, .. }
             | Revision::Formatting { sheet_id, .. } => Some(*sheet_id),
+            Revision::CellChange(cell_change) => Some(cell_change.sheet_id),
             Revision::RevisionView { .. } => None,
         }
     }

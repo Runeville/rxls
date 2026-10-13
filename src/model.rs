@@ -27,8 +27,8 @@ pub use cell::{
 pub use cell::{excel_serial_to_duration, excel_serial_to_naive_datetime};
 pub use revision::{
     DifferentialFormat as RevisionDifferentialFormat, Font as RevisionFont,
-    NumberFormat as RevisionNumberFormat, Revision, RevisionChange, RevisionData, RevisionLog,
-    RevisionRowColumnAction, RevisionViewAction, SheetName, User,
+    NumberFormat as RevisionNumberFormat, Revision, RevisionCellChange, RevisionChange,
+    RevisionData, RevisionLog, RevisionRowColumnAction, RevisionViewAction, SheetName, User,
 };
 
 #[cfg(test)]
