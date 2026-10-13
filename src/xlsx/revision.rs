@@ -622,7 +622,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
             },
 
             Ok(Event::Text(e)) => {
-                match parser_state.as_ref() {
+                match &parser_state {
                     Some(ParserState::V) => {
                         if let Some(current_revision) = current_revision.as_mut() {
                             if let RevisionBuilder::CellChange(cell_change_builder) =
@@ -676,7 +676,10 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                             }
                         }
                     }
-                    _ => unreachable!(),
+                    Some(ParserState::Font) => {
+                        unreachable!("Font unreachable")
+                    }
+                    None => unreachable!("&None"),
                 }
             }
 
