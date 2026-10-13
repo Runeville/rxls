@@ -68,7 +68,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     .as_ref()
                     .and_then(|format| format.number_format.as_ref())
                     .map_or(String::new(), |num_fmt| {
-                        format!(r#" numFmtId="{}"#, num_fmt.number_format_id)
+                        format!(r#" numFmtId="{}""#, num_fmt.number_format_id)
                     });
 
                 s.push_str(&format!(
