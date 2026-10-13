@@ -180,6 +180,13 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                         s.push_str("</font>");
                     }
 
+                    if let Some(number_format) = formatting.number_format {
+                        s.push_str(&format!(
+                            r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
+                            number_format.number_format_id, number_format.format_code
+                        ));
+                    }
+
                     s.push_str("</dxf>");
                 }
 
