@@ -353,6 +353,29 @@ pub struct NumberFormat {
     pub format_code: String,
 }
 
+impl NumberFormat {
+    /// Try to create a NumberFormat from a format code
+    pub fn try_from_format_code(format_code: String) -> Option<Self> {
+        Some(Self {
+            number_format_id: match format_code.as_str() {
+                "General" => Some(0),
+                "0" => Some(1),
+                "0.00" => Some(2),
+                "#,##0" => Some(3),
+                "#,##0.00" => Some(4),
+                "0%" => Some(9),
+                "0.00%" => Some(10),
+                "0.00E+00" => Some(11),
+                "# ?/?" => Some(12),
+                "# ??/??" => Some(13),
+                "m/d/yyyy" | "mm-dd-yy" => Some(14),
+                _ => None,
+            }?,
+            format_code,
+        })
+    }
+}
+
 /// <font> possible inner tags
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
