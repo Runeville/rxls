@@ -128,7 +128,9 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     }
                     _ => {}
                 }
-                s.push_str("</oc>");
+                if revision_cell_change.old_cell.is_some() {
+                    s.push_str("</oc>");
+                }
 
                 // <odxf>
                 match &revision_cell_change.old_differential_format {
