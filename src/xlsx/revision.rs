@@ -416,16 +416,20 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 }
 
                 b"ndxf" => {
-                    let change = RevisionChangeBuilder::NewDifferentialFormat(
-                        RevisionDifferentialFormat::default(),
-                    );
-                    changes_stack.push(change);
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
+                            cell_change_builder.new_differential_format =
+                                Some(RevisionDifferentialFormat::default());
+                        }
+                    }
                 }
                 b"odxf" => {
-                    let change = RevisionChangeBuilder::OldDifferentialFormat(
-                        RevisionDifferentialFormat::default(),
-                    );
-                    changes_stack.push(change);
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
+                            cell_change_builder.old_differential_format =
+                                Some(RevisionDifferentialFormat::default());
+                        }
+                    }
                 }
 
                 b"font" => {
@@ -605,15 +609,22 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         .and_then(|value| value.parse::<u16>().ok())
                         .unwrap_or_default();
                     let format_code = attr(&e, b"formatCode").unwrap_or_default();
-                    if let Some(current_change) = changes_stack.last_mut() {
-                        if let RevisionChangeBuilder::NewDifferentialFormat(formatting)
-                        | RevisionChangeBuilder::OldDifferentialFormat(formatting) =
-                            current_change
-                        {
-                            formatting.number_format = Some(RevisionNumberFormat {
-                                number_format_id,
-                                format_code,
-                            });
+                    let number_format = RevisionNumberFormat {
+                        number_format_id,
+                        format_code,
+                    };
+
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
+                            if let Some(new_differential_format) =
+                                cell_change_builder.new_differential_format.as_mut()
+                            {
+                                new_differential_format.number_format = Some(number_format);
+                            } else if let Some(old_differential_format) =
+                                cell_change_builder.new_differential_format.as_mut()
+                            {
+                                old_differential_format.number_format = Some(number_format);
+                            }
                         }
                     }
                 }
