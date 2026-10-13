@@ -76,6 +76,32 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     revision_cell_change.revision_id, revision_cell_change.sheet_id,
                 ));
 
+                // <oc>
+                match &revision_cell_change.old_cell {
+                    Some(Cell::Text(text)) => {
+                        s.push_str(&format!(r#"<oc r="{}" t="inlineStr">"#, address));
+                        s.push_str("<is>");
+                        s.push_str(&format!("<t>{}</t>", text));
+                        s.push_str("</is>");
+                    }
+                    Some(Cell::Formula { formula, .. }) => {
+                        s.push_str(&format!(r#"<oc r="{}">"#, address));
+                        s.push_str(&format!("<f>{}</f>", formula));
+                    }
+                    Some(Cell::Number(number)) => {
+                        s.push_str(&format!(r#"<oc r="{}">"#, address));
+                        s.push_str(&format!("<v>{}</v>", number));
+                    }
+                    Some(Cell::Bool(boolean)) => {
+                        s.push_str(&format!(r#"<oc r="{}" t="b">"#, address));
+                        s.push_str(&format!("<v>{}</v>", if *boolean { "1" } else { "0" }));
+                    }
+                    _ => {}
+                }
+                if revision_cell_change.old_cell.is_some() {
+                    s.push_str("</oc>");
+                }
+
                 // <nc>
                 match &revision_cell_change.new_cell {
                     Some(value) => match value {
@@ -105,32 +131,6 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 }
                 if revision_cell_change.new_cell.is_some() {
                     s.push_str("</nc>");
-                }
-
-                // <oc>
-                match &revision_cell_change.old_cell {
-                    Some(Cell::Text(text)) => {
-                        s.push_str(&format!(r#"<oc r="{}" t="inlineStr">"#, address));
-                        s.push_str("<is>");
-                        s.push_str(&format!("<t>{}</t>", text));
-                        s.push_str("</is>");
-                    }
-                    Some(Cell::Formula { formula, .. }) => {
-                        s.push_str(&format!(r#"<oc r="{}">"#, address));
-                        s.push_str(&format!("<f>{}</f>", formula));
-                    }
-                    Some(Cell::Number(number)) => {
-                        s.push_str(&format!(r#"<oc r="{}">"#, address));
-                        s.push_str(&format!("<v>{}</v>", number));
-                    }
-                    Some(Cell::Bool(boolean)) => {
-                        s.push_str(&format!(r#"<oc r="{}" t="b">"#, address));
-                        s.push_str(&format!("<v>{}</v>", if *boolean { "1" } else { "0" }));
-                    }
-                    _ => {}
-                }
-                if revision_cell_change.old_cell.is_some() {
-                    s.push_str("</oc>");
                 }
 
                 // <odxf>
