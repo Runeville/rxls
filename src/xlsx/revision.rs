@@ -614,18 +614,23 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         format_code,
                     };
 
-                    if let Some(current_revision) = current_revision.as_mut() {
-                        if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
-                            if let Some(new_differential_format) =
-                                cell_change_builder.new_differential_format.as_mut()
+                    match current_revision.as_mut() {
+                        Some(RevisionBuilder::CellChange(builder)) => {
+                            if let Some(formatting) = builder.new_differential_format.as_mut() {
+                                formatting.number_format = Some(number_format);
+                            } else if let Some(formatting) =
+                                builder.old_differential_format.as_mut()
                             {
-                                new_differential_format.number_format = Some(number_format);
-                            } else if let Some(old_differential_format) =
-                                cell_change_builder.old_differential_format.as_mut()
-                            {
-                                old_differential_format.number_format = Some(number_format);
+                                formatting.number_format = Some(number_format);
                             }
                         }
+                        Some(RevisionBuilder::Formatting {
+                            formatting: Some(formatting),
+                            ..
+                        }) => {
+                            formatting.number_format = Some(number_format);
+                        }
+                        _ => {}
                     }
                 }
 
