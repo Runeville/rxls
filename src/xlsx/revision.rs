@@ -20,6 +20,12 @@ enum ParserState {
     Font,
 }
 
+#[derive(Clone, Copy)]
+enum CellSide {
+    New,
+    Old,
+}
+
 #[derive(Debug, Clone)]
 enum RevisionChangeBuilder {
     CellChange(RevisionCellChangeBuilder),
@@ -345,6 +351,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
     let mut r = Reader::from_str(xml);
     let mut revisions: Vec<RevisionBuilder> = Vec::new();
     let mut parser_state: Option<ParserState> = None;
+    let mut cell_side: Option<CellSide> = None;
 
     let mut current_revision: Option<RevisionBuilder> = None;
     let mut changes_stack: Vec<RevisionChangeBuilder> = Vec::new();
@@ -388,6 +395,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 }
 
                 b"nc" => {
+                    cell_side = Some(CellSide::New);
                     if let Some(current_revision) = current_revision.as_mut() {
                         let is_bool = attr(&e, b"t").is_some_and(|value| value == "b");
                         if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
@@ -398,6 +406,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 }
 
                 b"oc" => {
+                    cell_side = Some(CellSide::Old);
                     if let Some(current_revision) = current_revision.as_mut() {
                         let is_bool = attr(&e, b"t").is_some_and(|value| value == "b");
                         if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
@@ -638,67 +647,43 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
             },
 
             Ok(Event::Text(e)) => {
-                match &parser_state {
-                    Some(ParserState::V) => {
-                        if let Some(current_revision) = current_revision.as_mut() {
-                            if let RevisionBuilder::CellChange(cell_change_builder) =
-                                current_revision
-                            {
-                                let new_value = text_of(&e);
-
-                                if matches!(cell_change_builder.new_cell, Some(Cell::Bool(..))) {
-                                    match new_value.parse::<u8>() {
-                                        Ok(new_value) => {
-                                            match new_value {
-                                                0 => {
-                                                    cell_change_builder.new_cell =
-                                                        Some(Cell::Bool(false))
-                                                }
-                                                1 => {
-                                                    cell_change_builder.new_cell =
-                                                        Some(Cell::Bool(true))
-                                                }
-                                                _ => todo!(), // TODO: add an error
-                                            }
-                                        }
-                                        Err(_) => todo!(), // TODO: add an error
-                                    }
-                                } else if let Ok(new_value) = new_value.parse::<f64>() {
-                                    cell_change_builder.new_cell = Some(Cell::Number(new_value));
-                                } else {
-                                    cell_change_builder.new_cell = Some(Cell::Text(new_value));
-                                }
+                if let (Some(RevisionBuilder::CellChange(builder)), Some(side)) =
+                    (current_revision.as_mut(), cell_side)
+                {
+                    let cell = match side {
+                        CellSide::New => &mut builder.new_cell,
+                        CellSide::Old => &mut builder.old_cell,
+                    };
+                    match parser_state {
+                        Some(ParserState::V) => {
+                            let value = text_of(&e);
+                            if matches!(cell, Some(Cell::Bool(..))) {
+                                *cell = Some(Cell::Bool(match value.parse::<u8>() {
+                                    Ok(0) => false,
+                                    Ok(1) => true,
+                                    _ => todo!(), // TODO: add an error
+                                }));
+                            } else if let Ok(number) = value.parse::<f64>() {
+                                *cell = Some(Cell::Number(number));
+                            } else {
+                                *cell = Some(Cell::Text(value));
                             }
                         }
-                    }
-                    Some(ParserState::T) => {
-                        if let Some(current_revision) = current_revision.as_mut() {
-                            if let RevisionBuilder::CellChange(cell_change_builder) =
-                                current_revision
-                            {
-                                cell_change_builder.new_cell = Some(Cell::Text(text_of(&e)));
-                            }
+                        Some(ParserState::T) => *cell = Some(Cell::Text(text_of(&e))),
+                        Some(ParserState::F) => {
+                            *cell = Some(Cell::Formula {
+                                formula: text_of(&e),
+                                cached: Box::new(Cell::Text("".to_string())),
+                            });
                         }
+                        Some(ParserState::Font) | None => {}
                     }
-                    Some(ParserState::F) => {
-                        if let Some(current_revision) = current_revision.as_mut() {
-                            if let RevisionBuilder::CellChange(cell_change_builder) =
-                                current_revision
-                            {
-                                cell_change_builder.new_cell = Some(Cell::Formula {
-                                    formula: text_of(&e),
-                                    cached: Box::new(Cell::Text("".to_string())),
-                                });
-                            }
-                        }
-                    }
-                    Some(ParserState::Font) => {}
-                    None => {}
                 }
             }
 
             Ok(Event::End(e)) => match local(e.name().as_ref()) {
                 b"v" | b"f" | b"t" => parser_state = None,
+                b"nc" | b"oc" => cell_side = None,
 
                 b"rcc" => {
                     if let Some(last_change) = changes_stack
