@@ -1,4 +1,5 @@
 //! Primitive cell-style components.
+#[cfg(feature = "serde")]
 use serde::Serialize;
 
 /// An RGB color, emitted as an 8-hex ARGB string (`FF` + `RRGGBB`).
