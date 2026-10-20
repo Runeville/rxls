@@ -3,7 +3,7 @@ use std::fmt;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-use super::Cell;
+use super::{Cell, FormatPattern};
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
@@ -341,6 +341,24 @@ pub struct DifferentialFormat {
     /// <numFmt> number format
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub number_format: Option<NumberFormat>,
+    /// <fill> fill formatting
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub fill: Option<Fill>,
+}
+
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct Fill {
+    pub pattern: FormatPattern,
+    pub background: Option<Color>,
+    pub foreground: Option<Color>,
+}
+
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct Color {
+    pub theme: Option<u8>,
+    pub tint: Option<f64>,
 }
 
 /// <numFmt> number format

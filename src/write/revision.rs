@@ -1,5 +1,5 @@
 use crate::write::xml::{NS_AC, NS_MAIN, NS_MC, NS_PKG_REL, NS_R, REL_REVISION_LOG, XML_DECL};
-use crate::{Cell, Revision, RevisionLog, User};
+use crate::{Cell, FormatPattern, Revision, RevisionLog, User};
 
 pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
     let mut s = String::new();
@@ -276,6 +276,41 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                             r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
                             number_format.number_format_id, number_format.format_code
                         ));
+                    }
+
+                    if let Some(fill) = formatting.fill {
+                        let pattern = match fill.pattern {
+                            FormatPattern::Solid => "solid",
+                            _ => "none",
+                        };
+                        s.push_str(&format!(r#"<patternFill patternType="{pattern}">"#));
+
+                        if let Some(background) = fill.background {
+                            let theme = background
+                                .theme
+                                .map_or(String::new(), |t| format!(r#" theme="{t}""#));
+
+                            let tint = background
+                                .tint
+                                .map_or(String::new(), |t| format!(r#" tint="{t}""#));
+
+                            s.push_str(&format!(r"<bgColor{theme}{tint}/>"));
+                        }
+                        if let Some(foreground) = fill.foreground {
+                            let theme = foreground
+                                .theme
+                                .map(|t| format!(r#" theme="{t}""#))
+                                .unwrap_or_default();
+
+                            let tint = foreground
+                                .tint
+                                .map(|t| format!(r#" tint="{t}""#))
+                                .unwrap_or_default();
+
+                            s.push_str(&format!(r"<fgColor{theme}{tint}/>"));
+                        }
+
+                        s.push_str("</patternFill>");
                     }
 
                     s.push_str("</dxf>");

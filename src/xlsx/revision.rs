@@ -3,9 +3,9 @@ use quick_xml::Reader;
 
 use super::{attr, local, text_of};
 use crate::{
-    Cell, Revision, RevisionCellChange, RevisionChange, RevisionDifferentialFormat, RevisionFont,
-    RevisionLog, RevisionNumberFormat, RevisionRowColumnAction, RevisionViewAction, SheetName,
-    User,
+    Cell, FormatPattern, Revision, RevisionCellChange, RevisionChange, RevisionColor,
+    RevisionDifferentialFormat, RevisionFill, RevisionFont, RevisionLog, RevisionNumberFormat,
+    RevisionRowColumnAction, RevisionViewAction, SheetName, User,
 };
 
 #[derive(PartialEq)]
@@ -452,6 +452,26 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     }
                 }
 
+                b"patternFill" => {
+                    let pattern = attr(&e, b"patternType").unwrap_or_default();
+
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting {
+                            formatting: Some(formatting),
+                            ..
+                        } = current_revision
+                        {
+                            formatting.fill = Some(RevisionFill {
+                                pattern: match pattern.as_str() {
+                                    "solid" => crate::model::FormatPattern::Solid,
+                                    _ => crate::model::FormatPattern::None,
+                                },
+                                ..Default::default()
+                            });
+                        }
+                    }
+                }
+
                 b"v" => {
                     parser_state = Some(ParserState::V);
                 }
@@ -640,6 +660,53 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                             formatting.number_format = Some(number_format);
                         }
                         _ => {}
+                    }
+                }
+                b"bgColor" => {
+                    let theme = attr(&e, b"theme")
+                        .and_then(|v| v.parse::<u8>().ok())
+                        .unwrap_or_default();
+                    let tint = attr(&e, b"tint")
+                        .and_then(|v| v.parse::<f64>().ok())
+                        .unwrap_or_default();
+
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting {
+                            formatting: Some(formatting),
+                            ..
+                        } = current_revision
+                        {
+                            if let Some(fill) = formatting.fill.as_mut() {
+                                fill.background = Some(RevisionColor {
+                                    theme: Some(theme),
+                                    tint: Some(tint),
+                                });
+                            }
+                        }
+                    }
+                }
+
+                b"fgColor" => {
+                    let theme = attr(&e, b"theme")
+                        .and_then(|v| v.parse::<u8>().ok())
+                        .unwrap_or_default();
+                    let tint = attr(&e, b"tint")
+                        .and_then(|v| v.parse::<f64>().ok())
+                        .unwrap_or_default();
+
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting {
+                            formatting: Some(formatting),
+                            ..
+                        } = current_revision
+                        {
+                            if let Some(fill) = formatting.fill.as_mut() {
+                                fill.foreground = Some(RevisionColor {
+                                    theme: Some(theme),
+                                    tint: Some(tint),
+                                });
+                            }
+                        }
                     }
                 }
 

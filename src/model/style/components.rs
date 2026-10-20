@@ -1,4 +1,5 @@
 //! Primitive cell-style components.
+use serde::Serialize;
 
 /// An RGB color, emitted as an 8-hex ARGB string (`FF` + `RRGGBB`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -36,6 +37,7 @@ pub enum FormatScript {
 
 /// Excel cell fill pattern.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum FormatPattern {
     /// Automatic or empty pattern.
     #[default]
