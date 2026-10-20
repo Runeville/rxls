@@ -463,8 +463,8 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         {
                             formatting.fill = Some(RevisionFill {
                                 pattern: match pattern.as_str() {
-                                    "solid" => crate::model::FormatPattern::Solid,
-                                    _ => crate::model::FormatPattern::None,
+                                    "solid" => FormatPattern::Solid,
+                                    _ => FormatPattern::None,
                                 },
                                 ..Default::default()
                             });
