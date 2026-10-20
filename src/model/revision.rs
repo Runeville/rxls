@@ -348,16 +348,23 @@ pub struct DifferentialFormat {
 
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+/// <fill> fill formatting
 pub struct Fill {
+    /// <patternFill> pattern fill
     pub pattern: FormatPattern,
+    /// <bgColor> background color
     pub background: Option<Color>,
+    /// <fgColor> foreground color
     pub foreground: Option<Color>,
 }
 
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
+/// bgColor and fgColor props
 pub struct Color {
+    /// theme
     pub theme: Option<u8>,
+    /// tint
     pub tint: Option<f64>,
 }
 
