@@ -353,8 +353,10 @@ pub struct Fill {
     /// <patternFill> pattern fill
     pub pattern: FormatPattern,
     /// <bgColor> background color
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub background: Option<Color>,
     /// <fgColor> foreground color
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub foreground: Option<Color>,
 }
 
@@ -363,8 +365,10 @@ pub struct Fill {
 /// bgColor and fgColor props
 pub struct Color {
     /// theme
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub theme: Option<u8>,
     /// tint
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub tint: Option<f64>,
 }
 
