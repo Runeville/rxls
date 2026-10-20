@@ -370,6 +370,9 @@ pub struct Color {
     /// tint
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub tint: Option<f64>,
+    /// rgb
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub rgb: Option<[u8; 3]>,
 }
 
 /// <numFmt> number format

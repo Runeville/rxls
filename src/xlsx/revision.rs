@@ -233,6 +233,13 @@ pub(super) struct ParsedRevisionHeaders {
     pub(super) revisions: Vec<RevisionRef>,
 }
 
+fn parse_rgb(hex: &str) -> Result<[u8; 3], std::num::ParseIntError> {
+    let color = u32::from_str_radix(hex, 16)?;
+    let [_, r, g, b] = color.to_be_bytes();
+
+    Ok([r, g, b])
+}
+
 /// Parse workbook properties, ordered sheets, and defined names.
 pub(super) fn parse_revision_headers(xml: &str) -> ParsedRevisionHeaders {
     let mut r = Reader::from_str(xml);
@@ -669,6 +676,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     let tint = attr(&e, b"tint")
                         .and_then(|v| v.parse::<f64>().ok())
                         .unwrap_or_default();
+                    let rgb = attr(&e, b"rgb").and_then(|rgb| parse_rgb(&rgb).ok());
 
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::Formatting {
@@ -680,6 +688,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                 fill.background = Some(RevisionColor {
                                     theme: Some(theme),
                                     tint: Some(tint),
+                                    rgb,
                                 });
                             }
                         }
@@ -693,6 +702,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     let tint = attr(&e, b"tint")
                         .and_then(|v| v.parse::<f64>().ok())
                         .unwrap_or_default();
+                    let rgb = attr(&e, b"rgb").and_then(|rgb| parse_rgb(&rgb).ok());
 
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::Formatting {
@@ -704,6 +714,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                 fill.foreground = Some(RevisionColor {
                                     theme: Some(theme),
                                     tint: Some(tint),
+                                    rgb,
                                 });
                             }
                         }

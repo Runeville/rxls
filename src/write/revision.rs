@@ -293,8 +293,11 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                             let tint = background
                                 .tint
                                 .map_or(String::new(), |t| format!(r#" tint="{t}""#));
+                            let rgb = background.rgb.map_or(String::new(), |[r, g, b]| {
+                                format!(r#"rgb="FF{r:02X}{g:02X}{b:02X}""#)
+                            });
 
-                            s.push_str(&format!(r"<bgColor{theme}{tint}/>"));
+                            s.push_str(&format!(r"<bgColor{theme}{tint}{rgb}/>"));
                         }
                         if let Some(foreground) = fill.foreground {
                             let theme = foreground
@@ -307,7 +310,11 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                                 .map(|t| format!(r#" tint="{t}""#))
                                 .unwrap_or_default();
 
-                            s.push_str(&format!(r"<fgColor{theme}{tint}/>"));
+                            let rgb = foreground.rgb.map_or(String::new(), |[r, g, b]| {
+                                format!(r#"rgb="FF{r:02X}{g:02X}{b:02X}""#)
+                            });
+
+                            s.push_str(&format!(r"<fgColor{theme}{tint}{rgb}/>"));
                         }
 
                         s.push_str("</patternFill>");
