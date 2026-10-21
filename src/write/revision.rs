@@ -274,7 +274,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                                 format!(r#" auto="{}""#, if a { "1" } else { "0" })
                             });
 
-                            write!(s, r#"<color{theme}{rgb}{indexed}{tint}{auto}"/>"#).unwrap();
+                            write!(s, r#"<color{theme}{rgb}{indexed}{tint}{auto}/>"#).unwrap();
                         }
                         s.push_str("</font>");
                     }
