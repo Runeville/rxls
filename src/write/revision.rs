@@ -1,15 +1,22 @@
+use std::fmt::Write;
+
 use crate::write::xml::{NS_AC, NS_MAIN, NS_MC, NS_PKG_REL, NS_R, REL_REVISION_LOG, XML_DECL};
 use crate::{Cell, FormatPattern, Revision, RevisionLog, User};
 
 pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
     let mut s = String::new();
     s.push_str(XML_DECL);
-    s.push_str(&format!(r#"<headers xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" guid="{{{}}}" diskRevisions="1" revisionId="{}" version="3">"#, revision_logs.last().unwrap().guid, revision_logs.len()));
+    write!(
+        s, 
+        r#"<headers xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" guid="{{{}}}" diskRevisions="1" revisionId="{}" version="3">"#,
+        revision_logs.last().unwrap().guid,
+        revision_logs.len()
+    ).unwrap();
 
     for revision_log in revision_logs {
         let max_sheet_id = revision_log.n_sheets + 1;
-
-        s.push_str(&format!(
+        write!(
+            s,
             r#"<header guid="{{{}}}" dateTime="{}" maxSheetId="{}" userName="{}" r:id="{}" {} {}>"#,
             revision_log.guid,
             revision_log.date_time,
@@ -24,20 +31,17 @@ pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
                 .max_revision_id()
                 .map(|id| format!(r#"maxRId="{id}""#))
                 .unwrap_or_default()
-        ));
-        s.push_str(&format!(
-            r#"<sheetIdMap count="{}">"#,
-            revision_log.n_sheets
-        ));
+        )
+        .unwrap();
+        write!(s, r#"<sheetIdMap count="{}">"#, revision_log.n_sheets).unwrap();
         for i in 1..=revision_log.n_sheets {
-            s.push_str(&format!(r#"<sheetId val="{}"/>"#, i));
+            write!(s, r#"<sheetId val="{i}"/>"#).unwrap();
         }
         s.push_str("</sheetIdMap>");
         s.push_str("</header>");
     }
 
     s.push_str("</headers>");
-
     s
 }
 
@@ -47,7 +51,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
     s.push_str(XML_DECL);
     let empty_log = revision_log.revisions.is_empty();
 
-    s.push_str(&format!(r#"<revisions xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac"{}>"#, if empty_log { "/" } else { "" }));
+    write!(s, r#"<revisions xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac"{}>"#, if empty_log { "/" } else { "" }).unwrap();
 
     for revision in revision_log.revisions.clone() {
         match revision {
@@ -71,30 +75,32 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                         format!(r#" numFmtId="{}""#, num_fmt.number_format_id)
                     });
 
-                s.push_str(&format!(
+                write!(
+                    s,
                     r#"<rcc rId="{}" sId="{}"{odxf_s}{dxf_s}{num_fmt_s}>"#,
-                    revision_cell_change.revision_id, revision_cell_change.sheet_id,
-                ));
+                    revision_cell_change.revision_id,
+                    revision_cell_change.sheet_id
+                ).unwrap();
 
                 // <oc>
                 match &revision_cell_change.old_cell {
                     Some(Cell::Text(text)) => {
-                        s.push_str(&format!(r#"<oc r="{}" t="inlineStr">"#, address));
+                        write!(s, r#"<oc r="{address}" t="inlineStr">"#).unwrap();
                         s.push_str("<is>");
-                        s.push_str(&format!("<t>{}</t>", text));
+                        write!(s, "<t>{text}</t>").unwrap();
                         s.push_str("</is>");
                     }
                     Some(Cell::Formula { formula, .. }) => {
-                        s.push_str(&format!(r#"<oc r="{}">"#, address));
-                        s.push_str(&format!("<f>{}</f>", formula));
+                        write!(s, r#"<oc r="{address}">"#).unwrap();
+                        write!(s, "<f>{formula}</f>").unwrap();
                     }
                     Some(Cell::Number(number)) => {
-                        s.push_str(&format!(r#"<oc r="{}">"#, address));
-                        s.push_str(&format!("<v>{}</v>", number));
+                        write!(s, r#"<oc r="{address}">"#).unwrap();
+                        write!(s, "<v>{number}</v>").unwrap();
                     }
                     Some(Cell::Bool(boolean)) => {
-                        s.push_str(&format!(r#"<oc r="{}" t="b">"#, address));
-                        s.push_str(&format!("<v>{}</v>", if *boolean { "1" } else { "0" }));
+                        write!(s, r#"<oc r="{address}" t="b">"#).unwrap();
+                        write!(s, "<v>{}</v>", if *boolean { "1" } else { "0" }).unwrap();
                     }
                     _ => {}
                 }
@@ -106,27 +112,27 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 match &revision_cell_change.new_cell {
                     Some(value) => match value {
                         Cell::Text(text) => {
-                            s.push_str(&format!(r#"<nc r="{address}" t="inlineStr">"#));
+                            write!(s, r#"<nc r="{address}" t="inlineStr">"#).unwrap();
                             s.push_str("<is>");
-                            s.push_str(&format!("<t>{}</t>", text));
+                            write!(s, "<t>{text}</t>").unwrap();
                             s.push_str("</is>");
                         }
                         Cell::Formula { formula, .. } => {
-                            s.push_str(&format!(r#"<nc r="{address}">"#));
-                            s.push_str(&format!("<f>{}</f>", formula));
+                            write!(s, r#"<nc r="{address}">"#).unwrap();
+                            write!(s, "<f>{formula}</f>").unwrap();
                         }
                         Cell::Number(number) => {
-                            s.push_str(&format!(r#"<nc r="{address}">"#));
-                            s.push_str(&format!("<v>{}</v>", number));
+                            write!(s, r#"<nc r="{address}">"#).unwrap();
+                            write!(s, "<v>{number}</v>").unwrap();
                         }
                         Cell::Bool(boolean) => {
-                            s.push_str(&format!(r#"<nc r="{address}" t="b">"#));
-                            s.push_str(&format!("<v>{}</v>", if *boolean { "1" } else { "0" }));
+                            write!(s, r#"<nc r="{address}" t="b">"#).unwrap();
+                            write!(s, "<v>{}</v>", if *boolean { "1" } else { "0" }).unwrap();
                         }
                         _ => {}
                     },
                     None => {
-                        s.push_str(&format!(r#"<nc r="{}"/>"#, address));
+                        write!(s, r#"<nc r="{address}"/>"#).unwrap();
                     }
                 }
                 if revision_cell_change.new_cell.is_some() {
@@ -138,10 +144,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     Some(format) => {
                         s.push_str("<odxf>");
                         if let Some(num_fmt) = &format.number_format.as_ref() {
-                            s.push_str(&format!(
-                                r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
-                                num_fmt.number_format_id, num_fmt.format_code
-                            ));
+                            write!(s, r#"<numFmt numFmtId="{}" formatCode="{}"/>"#, num_fmt.number_format_id, num_fmt.format_code).unwrap();
                         }
                         s.push_str("</odxf>");
                     }
@@ -153,10 +156,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     Some(format) => {
                         s.push_str("<ndxf>");
                         if let Some(number_format) = &format.number_format {
-                            s.push_str(&format!(
-                                r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
-                                number_format.number_format_id, number_format.format_code
-                            ));
+                            write!(s, r#"<numFmt numFmtId="{}" formatCode="{}"/>"#, number_format.number_format_id, number_format.format_code).unwrap();
                         }
                         s.push_str("</ndxf>");
                     }
@@ -174,22 +174,15 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 eol,
             } => {
                 if changes.is_empty() {
-                    s.push_str(&format!(
-                        r#"<rrc rId="{revision_id}" sId="{sheet_id}" action="{action}" ref="{address}" eol="{}"/>"#, if eol { "1" } else { "0" }
-                    ));
+                    write!(s, r#"<rrc rId="{revision_id}" sId="{sheet_id}" action="{action}" ref="{address}" eol="{}"/>"#, if eol { "1" } else { "0" }).unwrap();
                 } else {
-                    s.push_str(&format!(
-                        r#"<rrc rId="{revision_id}" sId="{sheet_id}" action="{action}" ref="{address}" eol="{}">"#, if eol { "1" } else { "0" }
-                    ));
+                    write!(s, r#"<rrc rId="{revision_id}" sId="{sheet_id}" action="{action}" ref="{address}" eol="{}">"#, if eol { "1" } else { "0" }).unwrap();
                     todo!("RevisionChanges restructure");
                     s.push_str("</rrc>");
                 }
             }
             Revision::RevisionView { guid, action } => {
-                s.push_str(&format!(
-                    r#"<rcv guid="{{{}}}" action="{}"/>"#,
-                    guid, action
-                ));
+                write!(s, r#"<rcv guid="{{{guid}}}" action="{action}"/>"#).unwrap();
             }
             Revision::InsertSheet {
                 revision_id,
@@ -197,10 +190,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 name,
                 sheet_position,
             } => {
-                s.push_str(&format!(
-                    r#"<ris rId="{}" sheetId="{}" name="{}" sheetPosition="{}"/>"#,
-                    revision_id, sheet_id, name, sheet_position
-                ));
+                write!(s, r#"<ris rId="{revision_id}" sheetId="{sheet_id}" name="{name}" sheetPosition="{sheet_position}"/>"#).unwrap();
             }
             Revision::RenameSheet {
                 revision_id,
@@ -208,10 +198,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 old_name,
                 new_name,
             } => {
-                s.push_str(&format!(
-                    r#"<rsnm rId="{}" sheetId="{}" oldName="{}" newName="{}"/>"#,
-                    revision_id, sheet_id, old_name, new_name
-                ));
+                write!(s, r#"<rsnm rId="{revision_id}" sheetId="{sheet_id}" oldName="{old_name}" newName="{new_name}"/>"#).unwrap();
             }
             Revision::Formatting {
                 sheet_id,
@@ -228,9 +215,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     .map(|v| format!(r#" length="{v}""#))
                     .unwrap_or_default();
 
-                s.push_str(&format!(
-                    r#"<rfmt sheetId="{sheet_id}" sqref="{address}"{start}{length}>"#
-                ));
+                write!(s, r#"<rfmt sheetId="{sheet_id}" sqref="{address}"{start}{length}>"#).unwrap();
 
                 if let Some(formatting) = formatting {
                     s.push_str("<dxf>");
@@ -266,19 +251,16 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                             }
                         }
                         if let Some(size) = font.size {
-                            s.push_str(&format!(r#"<sz val="{}"/>"#, size));
+                            write!(s, r#"<sz val="{size}"/>"#).unwrap();
                         }
                         if let Some([r, g, b]) = font.color {
-                            s.push_str(&format!(r#"<color rgb="FF{r:02X}{g:02X}{b:02X}"/>"#,));
+                            write!(s, r#"<color rgb="FF{r:02X}{g:02X}{b:02X}"/>"#).unwrap();
                         }
                         s.push_str("</font>");
                     }
 
                     if let Some(number_format) = formatting.number_format {
-                        s.push_str(&format!(
-                            r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
-                            number_format.number_format_id, number_format.format_code
-                        ));
+                        write!(s, r#"<numFmt numFmtId="{}" formatCode="{}"/>"#, number_format.number_format_id, number_format.format_code).unwrap();
                     }
 
                     if let Some(fill) = formatting.fill {
@@ -287,7 +269,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                             _ => "none",
                         };
                         s.push_str("<fill>");
-                        s.push_str(&format!(r#"<patternFill patternType="{pattern}">"#));
+                        write!(s, r#"<patternFill patternType="{pattern}">"#).unwrap();
 
                         if let Some(background) = fill.background {
                             let theme = background
@@ -306,7 +288,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                                 format!(r#" auto="{}""#, if a { "1" } else { "0" })
                             });
 
-                            s.push_str(&format!(r"<bgColor{theme}{tint}{rgb}{auto}/>"));
+                            write!(s, r"<bgColor{theme}{tint}{rgb}{auto}/>").unwrap();
                         }
                         if let Some(foreground) = fill.foreground {
                             let theme = foreground
@@ -327,7 +309,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                                 format!(r#" auto="{}""#, if a { "1" } else { "0" })
                             });
 
-                            s.push_str(&format!(r"<fgColor{theme}{tint}{rgb}{auto}/>"));
+                            write!(s, r"<fgColor{theme}{tint}{rgb}{auto}/>").unwrap();
                         }
 
                         s.push_str("</patternFill>");
@@ -353,22 +335,14 @@ pub(super) fn revisions_user_names_xml(users: &[User]) -> String {
     s.push_str(XML_DECL);
 
     if users.is_empty() {
-        s.push_str(&format!(
-        r#"<users xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" count="0"/>"#
-    ));
+        write!(s, r#"<users xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" count="0"/>"#).unwrap();
         return s;
     }
 
-    s.push_str(&format!(
-        r#"<users xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" count="{}">"#,
-        users.len()
-    ));
+    write!(s, r#"<users xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" count="{}">"#, users.len()).unwrap();
 
     for user in users {
-        s.push_str(&format!(
-            r#"<userInfo guid="{{{}}}" name="{}" id="{}" dateTime="{}"/>"#,
-            user.guid, user.name, user.id, user.datetime
-        ));
+        write!(s, r#"<userInfo guid="{{{}}}" name="{}" id="{}" dateTime="{}"/>"#, user.guid, user.name, user.id, user.datetime).unwrap();
     }
     s.push_str("</users>");
 
@@ -378,13 +352,9 @@ pub(super) fn revisions_user_names_xml(users: &[User]) -> String {
 pub(super) fn revision_headers_rels(n_revision_logs: usize) -> String {
     let mut s = String::new();
     s.push_str(XML_DECL);
-    s.push_str(&format!(r#"<Relationships xmlns="{NS_PKG_REL}">"#));
+    write!(s, r#"<Relationships xmlns="{NS_PKG_REL}">"#).unwrap();
     for i in 0..n_revision_logs {
-        s.push_str(&format!(
-            r#"<Relationship Id="rId{}" Type="{REL_REVISION_LOG}" Target="revisionLog{}.xml"/>"#,
-            i + 1,
-            i + 1
-        ));
+        write!(s, r#"<Relationship Id="rId{}" Type="{REL_REVISION_LOG}" Target="revisionLog{}.xml"/>"#, i + 1, i + 1).unwrap();
     }
     s.push_str("</Relationships>");
     s
