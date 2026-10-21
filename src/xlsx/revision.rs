@@ -233,13 +233,6 @@ pub(super) struct ParsedRevisionHeaders {
     pub(super) revisions: Vec<RevisionRef>,
 }
 
-fn parse_rgb(hex: &str) -> Result<[u8; 3], std::num::ParseIntError> {
-    let color = u32::from_str_radix(hex, 16)?;
-    let [_, r, g, b] = color.to_be_bytes();
-
-    Ok([r, g, b])
-}
-
 /// Parse workbook properties, ordered sheets, and defined names.
 pub(super) fn parse_revision_headers(xml: &str) -> ParsedRevisionHeaders {
     let mut r = Reader::from_str(xml);
@@ -817,4 +810,11 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
         revisions,
         n_sheets: revision_ref.sheet_ids.len(),
     }
+}
+
+fn parse_rgb(hex: &str) -> Result<[u8; 3], std::num::ParseIntError> {
+    let color = u32::from_str_radix(hex, 16)?;
+    let [_, r, g, b] = color.to_be_bytes();
+
+    Ok([r, g, b])
 }
