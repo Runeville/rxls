@@ -364,15 +364,18 @@ pub struct Fill {
 #[cfg_attr(feature = "serde", derive(Serialize))]
 /// bgColor and fgColor props
 pub struct Color {
-    /// theme
+    /// theme attribute
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub theme: Option<u8>,
-    /// tint
+    /// tint attribute
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub tint: Option<f64>,
-    /// rgb
+    /// rgb attribute
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub rgb: Option<[u8; 3]>,
+    /// auto attribute
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub auto: Option<bool>,
 }
 
 /// <numFmt> number format

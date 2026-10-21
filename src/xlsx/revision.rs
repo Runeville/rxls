@@ -677,6 +677,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         .and_then(|v| v.parse::<f64>().ok())
                         .unwrap_or_default();
                     let rgb = attr(&e, b"rgb").and_then(|rgb| parse_rgb(&rgb).ok());
+                    let auto = attr(&e, b"auto").map(|v| v == "1");
 
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::Formatting {
@@ -689,6 +690,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                     theme: Some(theme),
                                     tint: Some(tint),
                                     rgb,
+                                    auto,
                                 });
                             }
                         }
@@ -703,6 +705,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         .and_then(|v| v.parse::<f64>().ok())
                         .unwrap_or_default();
                     let rgb = attr(&e, b"rgb").and_then(|rgb| parse_rgb(&rgb).ok());
+                    let auto = attr(&e, b"auto").map(|v| v == "1");
 
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::Formatting {
@@ -715,6 +718,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                     theme: Some(theme),
                                     tint: Some(tint),
                                     rgb,
+                                    auto,
                                 });
                             }
                         }
