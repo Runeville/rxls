@@ -283,6 +283,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                             FormatPattern::Solid => "solid",
                             _ => "none",
                         };
+                        s.push_str("<fill>");
                         s.push_str(&format!(r#"<patternFill patternType="{pattern}">"#));
 
                         if let Some(background) = fill.background {
@@ -327,6 +328,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                         }
 
                         s.push_str("</patternFill>");
+                        s.push_str("</fill>");
                     }
 
                     s.push_str("</dxf>");
