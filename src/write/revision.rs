@@ -295,7 +295,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                                 .map_or(String::new(), |t| format!(r#" tint="{t}""#));
 
                             let rgb = background.rgb.map_or(String::new(), |[r, g, b]| {
-                                format!(r#"rgb="FF{r:02X}{g:02X}{b:02X}""#)
+                                format!(r#" rgb="FF{r:02X}{g:02X}{b:02X}""#)
                             });
 
                             let auto = background.auto.map_or(String::new(), |a| {
@@ -316,7 +316,7 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                                 .unwrap_or_default();
 
                             let rgb = foreground.rgb.map_or(String::new(), |[r, g, b]| {
-                                format!(r#"rgb="FF{r:02X}{g:02X}{b:02X}""#)
+                                format!(r#" rgb="FF{r:02X}{g:02X}{b:02X}""#)
                             });
 
                             let auto = foreground.auto.map_or(String::new(), |a| {
