@@ -485,5 +485,26 @@ pub struct Font {
     pub size: Option<f32>,
     /// <color> font color
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub color: Option<[u8; 3]>,
+    pub color: Option<FontColor>,
+}
+
+/// <color>
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct FontColor {
+    /// theme attribute
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub theme: Option<u8>,
+    /// tint attribute
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub tint: Option<f64>,
+    /// rgb attribute
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub rgb: Option<[u8; 3]>,
+    /// auto attribute
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub auto: Option<bool>,
+    /// indexed attribute
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub indexed: Option<u32>,
 }

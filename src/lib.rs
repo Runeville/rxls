@@ -115,10 +115,10 @@ pub use model::{
     PrintMetadata, PrintPageOrder, ProtectionOptions, Range, RangeRow, RangeRowCells,
     RangeRowUsedCells, RangeRows, Reader, Revision, RevisionCellChange, RevisionChange,
     RevisionColor, RevisionData, RevisionDifferentialFormat, RevisionFill, RevisionFont,
-    RevisionLog, RevisionNumberFormat, RevisionRowColumnAction, RevisionViewAction, Series, Sheet,
-    SheetMetadata, SheetName, SheetType, SheetView, SheetVisible, Sparkline, SparklineKind,
-    StyleFidelity, StyleLoss, StyleLossKind, Table, TextRun, User, VAlign, Workbook,
-    WorkbookMetadata, XlsbDefaultColumnWidth,
+    RevisionFontColor, RevisionLog, RevisionNumberFormat, RevisionRowColumnAction,
+    RevisionViewAction, Series, Sheet, SheetMetadata, SheetName, SheetType, SheetView,
+    SheetVisible, Sparkline, SparklineKind, StyleFidelity, StyleLoss, StyleLossKind, Table,
+    TextRun, User, VAlign, Workbook, WorkbookMetadata, XlsbDefaultColumnWidth,
 };
 #[cfg(feature = "chrono")]
 pub use model::{excel_serial_to_duration, excel_serial_to_naive_datetime};

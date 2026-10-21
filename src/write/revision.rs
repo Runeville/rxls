@@ -253,8 +253,28 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                         if let Some(size) = font.size {
                             write!(s, r#"<sz val="{size}"/>"#).unwrap();
                         }
-                        if let Some([r, g, b]) = font.color {
-                            write!(s, r#"<color rgb="FF{r:02X}{g:02X}{b:02X}"/>"#).unwrap();
+                        if let Some(color) = font.color {
+                            let theme = color
+                                .theme
+                                .map_or(String::new(), |t| format!(r#" theme="{t}""#));
+
+                            let tint = color
+                                .tint
+                                .map_or(String::new(), |t| format!(r#" tint="{t}""#));
+
+                            let rgb = color.rgb.map_or(String::new(), |[r, g, b]| {
+                                format!(r#" rgb="FF{r:02X}{g:02X}{b:02X}""#)
+                            });
+
+                            let indexed = color.indexed.map_or(String::new(), |i| {
+                                format!(r#" indexed="{i}""#)
+                            });
+
+                            let auto = color.auto.map_or(String::new(), |a| {
+                                format!(r#" auto="{}""#, if a { "1" } else { "0" })
+                            });
+
+                            write!(s, r#"<color{theme}{rgb}{indexed}{tint}{auto}"/>"#).unwrap();
                         }
                         s.push_str("</font>");
                     }

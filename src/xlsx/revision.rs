@@ -4,8 +4,8 @@ use quick_xml::Reader;
 use super::{attr, local, text_of};
 use crate::{
     Cell, FormatPattern, Revision, RevisionCellChange, RevisionChange, RevisionColor,
-    RevisionDifferentialFormat, RevisionFill, RevisionFont, RevisionLog, RevisionNumberFormat,
-    RevisionRowColumnAction, RevisionViewAction, SheetName, User,
+    RevisionDifferentialFormat, RevisionFill, RevisionFont, RevisionFontColor, RevisionLog,
+    RevisionNumberFormat, RevisionRowColumnAction, RevisionViewAction, SheetName, User,
 };
 
 #[derive(PartialEq)]
@@ -558,7 +558,12 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 }
 
                 b"color" => {
-                    let color = attr(&e, b"rgb").and_then(|rgb| parse_rgb(&rgb).ok());
+                    let rgb = attr(&e, b"rgb").and_then(|rgb| parse_rgb(&rgb).ok());
+                    let theme = attr(&e, b"theme").and_then(|v| v.parse::<u8>().ok());
+                    let tint = attr(&e, b"tint").and_then(|v| v.parse::<f64>().ok());
+                    let auto = attr(&e, b"auto").map(|v| v == "1");
+                    let indexed = attr(&e, b"indexed").and_then(|v| v.parse::<u32>().ok());
+
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::Formatting {
                             formatting: Some(formatting),
@@ -566,7 +571,13 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         } = current_revision
                         {
                             if let Some(font) = formatting.font.as_mut() {
-                                font.color = color;
+                                font.color = Some(RevisionFontColor {
+                                    rgb,
+                                    theme,
+                                    tint,
+                                    auto,
+                                    indexed,
+                                })
                             }
                         }
                     }
