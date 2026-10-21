@@ -483,4 +483,7 @@ pub struct Font {
     /// <sz> font size
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub size: Option<f32>,
+    /// <color> font color
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub color: Option<[u8; 3]>,
 }

@@ -556,6 +556,22 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         },
                     });
                 }
+
+                b"color" => {
+                    let color = attr(&e, b"rgb").and_then(|rgb| parse_rgb(&rgb).ok());
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting {
+                            formatting: Some(formatting),
+                            ..
+                        } = current_revision
+                        {
+                            if let Some(font) = formatting.font.as_mut() {
+                                font.color = color;
+                            }
+                        }
+                    }
+                }
+
                 b"nc" => {
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {

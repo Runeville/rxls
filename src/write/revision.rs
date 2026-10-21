@@ -268,6 +268,9 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                         if let Some(size) = font.size {
                             s.push_str(&format!(r#"<sz val="{}"/>"#, size));
                         }
+                        if let Some([r, g, b]) = font.color {
+                            s.push_str(&format!(r#"<color rgb="FF{r:02X}{g:02X}{b:02X}"/>"#,));
+                        }
                         s.push_str("</font>");
                     }
 
