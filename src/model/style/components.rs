@@ -131,6 +131,7 @@ impl Fill {
 
 /// Horizontal cell alignment.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum HAlign {
     /// Left-aligned.
     Left,
@@ -142,6 +143,7 @@ pub enum HAlign {
 
 /// Vertical cell alignment.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum VAlign {
     /// Top.
     Top,
@@ -149,6 +151,72 @@ pub enum VAlign {
     Middle,
     /// Bottom.
     Bottom,
+}
+
+impl std::fmt::Display for VAlign {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = match self {
+            Self::Top => "top",
+            Self::Middle => "middle",
+            Self::Bottom => "bottom",
+        };
+
+        f.write_str(value)
+    }
+}
+
+impl std::fmt::Display for HAlign {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = match self {
+            Self::Left => "left",
+            Self::Center => "center",
+            Self::Right => "right",
+        };
+
+        f.write_str(value)
+    }
+}
+
+impl TryFrom<&str> for HAlign {
+    type Error = &'static str;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        match s {
+            "left" => Ok(Self::Left),
+            "center" => Ok(Self::Center),
+            "right" => Ok(Self::Right),
+            _ => Err("invalid value for HAlign"),
+        }
+    }
+}
+
+impl TryFrom<String> for HAlign {
+    type Error = &'static str;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::try_from(s.as_str())
+    }
+}
+
+impl TryFrom<&str> for VAlign {
+    type Error = &'static str;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        match s {
+            "top" => Ok(Self::Top),
+            "middle" => Ok(Self::Middle),
+            "bottom" => Ok(Self::Bottom),
+            _ => Err("invalid value for VAlign"),
+        }
+    }
+}
+
+impl TryFrom<String> for VAlign {
+    type Error = &'static str;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::try_from(s.as_str())
+    }
 }
 
 /// Cell text alignment.

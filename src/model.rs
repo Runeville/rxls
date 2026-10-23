@@ -26,10 +26,11 @@ pub use cell::{
 #[cfg(feature = "chrono")]
 pub use cell::{excel_serial_to_duration, excel_serial_to_naive_datetime};
 pub use revision::{
-    Color as RevisionColor, DifferentialFormat as RevisionDifferentialFormat, Fill as RevisionFill,
-    Font as RevisionFont, FontColor as RevisionFontColor, NumberFormat as RevisionNumberFormat,
-    Revision, RevisionCellChange, RevisionChange, RevisionData, RevisionLog,
-    RevisionRowColumnAction, RevisionViewAction, SheetName, User,
+    Alignment as RevisionAlignment, Color as RevisionColor,
+    DifferentialFormat as RevisionDifferentialFormat, Fill as RevisionFill, Font as RevisionFont,
+    FontColor as RevisionFontColor, NumberFormat as RevisionNumberFormat, Revision,
+    RevisionCellChange, RevisionChange, RevisionData, RevisionLog, RevisionRowColumnAction,
+    RevisionViewAction, SheetName, User,
 };
 
 #[cfg(test)]

@@ -349,6 +349,18 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                         s.push_str("</fill>");
                     }
 
+                    if let Some(alignment) = formatting.alignment.as_ref() {
+                        let horizontal = alignment.horizontal.map_or(String::new(), |h| {
+                            format!(r#" horizontal="{h}""#)
+                        });
+                        let vertical = alignment.vertical.map_or(String::new(), |v| {
+                            format!(r#" vertical="{v}""#)
+                        });
+
+                        // s.push_str("<alignment{horizontal}{vertical}/>");
+                        write!(s, "<alignment{vertical}{horizontal}/>").unwrap();
+                    }
+
                     s.push_str("</dxf>");
                 }
 

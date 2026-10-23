@@ -3,9 +3,10 @@ use quick_xml::Reader;
 
 use super::{attr, local, text_of};
 use crate::{
-    Cell, FormatPattern, Revision, RevisionCellChange, RevisionChange, RevisionColor,
-    RevisionDifferentialFormat, RevisionFill, RevisionFont, RevisionFontColor, RevisionLog,
-    RevisionNumberFormat, RevisionRowColumnAction, RevisionViewAction, SheetName, User,
+    Cell, FormatPattern, HAlign, Revision, RevisionAlignment, RevisionCellChange, RevisionChange,
+    RevisionColor, RevisionDifferentialFormat, RevisionFill, RevisionFont, RevisionFontColor,
+    RevisionLog, RevisionNumberFormat, RevisionRowColumnAction, RevisionViewAction, SheetName,
+    User, VAlign,
 };
 
 #[derive(PartialEq)]
@@ -624,6 +625,24 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                             if let Some(font) = formatting.font.as_mut() {
                                 font.scheme = Some(val);
                             }
+                        }
+                    }
+                }
+
+                b"alignment" => {
+                    let horizontal = attr(&e, b"horizontal").and_then(|v| HAlign::try_from(v).ok());
+                    let vertical = attr(&e, b"vertical").and_then(|v| VAlign::try_from(v).ok());
+
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting {
+                            formatting: Some(formatting),
+                            ..
+                        } = current_revision
+                        {
+                            formatting.alignment = Some(RevisionAlignment {
+                                horizontal,
+                                vertical,
+                            });
                         }
                     }
                 }

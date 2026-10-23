@@ -3,7 +3,7 @@ use std::fmt;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-use super::{Cell, FormatPattern};
+use super::{Cell, FormatPattern, HAlign, VAlign};
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
@@ -331,7 +331,7 @@ pub struct User {
     pub datetime: String,
 }
 
-/// <rfmt> formatting
+/// <dxf> formatting
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct DifferentialFormat {
@@ -344,6 +344,19 @@ pub struct DifferentialFormat {
     /// <fill> fill formatting
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub fill: Option<Fill>,
+    /// <alignment> alignment
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub alignment: Option<Alignment>,
+}
+
+/// <alignment> alignment
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct Alignment {
+    /// <horizontal> horizontal alignment
+    pub horizontal: Option<HAlign>,
+    /// <vertical> vertical alignment
+    pub vertical: Option<VAlign>,
 }
 
 #[derive(Debug, Clone, Default)]
