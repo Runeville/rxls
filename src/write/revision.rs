@@ -276,6 +276,19 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
 
                             write!(s, r#"<color{theme}{rgb}{indexed}{tint}{auto}/>"#).unwrap();
                         }
+
+                        if let Some(name) = font.name {
+                            write!(s, r#"<name val="{}"/>"#, name).unwrap();
+                        }
+
+                        if let Some(family) = font.family {
+                            write!(s, r#"<family val="{}"/>"#, family).unwrap();
+                        }
+
+                        if let Some(scheme) = font.scheme {
+                            write!(s, r#"<scheme val="{}"/>"#, scheme).unwrap();
+                        }
+
                         s.push_str("</font>");
                     }
 
