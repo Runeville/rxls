@@ -583,6 +583,51 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     }
                 }
 
+                b"name" => {
+                    let val = attr(&e, b"val").unwrap_or_default();
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting {
+                            formatting: Some(formatting),
+                            ..
+                        } = current_revision
+                        {
+                            if let Some(font) = formatting.font.as_mut() {
+                                font.name = Some(val);
+                            }
+                        }
+                    }
+                }
+
+                b"family" => {
+                    let val = attr(&e, b"val").and_then(|value| value.parse::<u16>().ok());
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting {
+                            formatting: Some(formatting),
+                            ..
+                        } = current_revision
+                        {
+                            if let Some(font) = formatting.font.as_mut() {
+                                font.family = val;
+                            }
+                        }
+                    }
+                }
+
+                b"scheme" => {
+                    let val = attr(&e, b"val").unwrap_or_default();
+                    if let Some(current_revision) = current_revision.as_mut() {
+                        if let RevisionBuilder::Formatting {
+                            formatting: Some(formatting),
+                            ..
+                        } = current_revision
+                        {
+                            if let Some(font) = formatting.font.as_mut() {
+                                font.scheme = Some(val);
+                            }
+                        }
+                    }
+                }
+
                 b"nc" => {
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {

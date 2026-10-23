@@ -468,6 +468,15 @@ impl NumberFormat {
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Font {
+    /// font name
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub name: Option<String>,
+    /// font family
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub family: Option<u16>,
+    /// font scheme
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub scheme: Option<String>,
     /// <b> bold
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub bold: Option<bool>,
