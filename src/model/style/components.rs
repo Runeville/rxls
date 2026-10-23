@@ -204,7 +204,7 @@ impl TryFrom<&str> for VAlign {
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         match s {
             "top" => Ok(Self::Top),
-            "middle" => Ok(Self::Middle),
+            "middle" | "center" => Ok(Self::Middle),
             "bottom" => Ok(Self::Bottom),
             _ => Err("invalid value for VAlign"),
         }
