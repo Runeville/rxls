@@ -221,7 +221,9 @@ impl Revision {
         match self {
             Revision::RowColumn { revision_id, .. } => Some(*revision_id),
             Revision::CellChange(cell_change) => Some(cell_change.revision_id),
-            Revision::Formatting { .. } | Revision::RevisionView { .. } => None,
+            Revision::Formatting { .. }
+            | Revision::RevisionView { .. }
+            | Revision::Comment { .. } => None,
             Revision::InsertSheet { revision_id, .. } => Some(*revision_id),
             Revision::RenameSheet { revision_id, .. } => Some(*revision_id),
         }
@@ -233,7 +235,8 @@ impl Revision {
             Revision::RowColumn { sheet_id, .. }
             | Revision::InsertSheet { sheet_id, .. }
             | Revision::RenameSheet { sheet_id, .. }
-            | Revision::Formatting { sheet_id, .. } => Some(*sheet_id),
+            | Revision::Formatting { sheet_id, .. }
+            | Revision::Comment { sheet_id, .. } => Some(*sheet_id),
             Revision::CellChange(cell_change) => Some(cell_change.sheet_id),
             Revision::RevisionView { .. } => None,
         }
