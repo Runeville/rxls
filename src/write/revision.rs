@@ -366,6 +366,12 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
 
                 s.push_str("</rfmt>");
             }
+            Revision::Comment {sheet_id, address, guid, author, new_length} => {
+                let new_length = new_length.map_or(String::new(), |v| format!(r#" newLength="{v}""#));
+
+                write!(s, r#"<rch author="{author}" guid="{{{guid}}}" sId="{sheet_id}" cell="{address}"{new_length}/>"#).unwrap();
+
+            }
         }
     }
 
