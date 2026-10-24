@@ -178,6 +178,7 @@ pub enum Revision {
         /// New sheet name
         new_name: SheetName,
     },
+    /// <rcmt> Comment revision
     Comment {
         /// sheetId
         sheet_id: usize,
