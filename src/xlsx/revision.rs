@@ -110,6 +110,13 @@ enum RevisionBuilder {
         address: String,
         formatting: Option<RevisionDifferentialFormat>,
     },
+    Comment {
+        sheet_id: usize,
+        address: String,
+        guid: String,
+        author: String,
+        new_length: Option<usize>,
+    },
 }
 
 impl RevisionBuilder {
@@ -171,6 +178,19 @@ impl RevisionBuilder {
                 address,
                 formatting,
             }),
+            RevisionBuilder::Comment {
+                sheet_id,
+                address,
+                guid,
+                author,
+                new_length,
+            } => Some(Revision::Comment {
+                sheet_id,
+                address,
+                guid,
+                author,
+                new_length,
+            }),
         }
     }
 
@@ -181,7 +201,8 @@ impl RevisionBuilder {
             | RevisionBuilder::RevisionView { .. }
             | RevisionBuilder::InsertSheet { .. }
             | RevisionBuilder::Formatting { .. }
-            | RevisionBuilder::RenameSheet { .. } => {}
+            | RevisionBuilder::RenameSheet { .. }
+            | RevisionBuilder::Comment { .. } => {}
         }
     }
 }
@@ -807,6 +828,28 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                             }
                         }
                     }
+                }
+
+                b"rcmt" => {
+                    let guid = attr(&e, b"guid")
+                        .unwrap_or_default()
+                        .trim_matches(['{', '}'])
+                        .to_string();
+                    let author = attr(&e, b"author").unwrap_or_default();
+                    let new_length =
+                        attr(&e, b"newLength").and_then(|value| value.parse::<usize>().ok());
+                    let address = attr(&e, b"cell").unwrap_or_default();
+                    let sheet_id = attr(&e, b"sheetId")
+                        .and_then(|value| value.parse::<usize>().ok())
+                        .unwrap_or_default();
+
+                    revisions.push(RevisionBuilder::Comment {
+                        sheet_id,
+                        address,
+                        guid,
+                        author,
+                        new_length,
+                    });
                 }
 
                 _ => {}

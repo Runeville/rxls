@@ -178,6 +178,18 @@ pub enum Revision {
         /// New sheet name
         new_name: SheetName,
     },
+    Comment {
+        /// sheetId
+        sheet_id: usize,
+        /// cell
+        address: String,
+        /// guid
+        guid: String,
+        /// author
+        author: String,
+        /// newLength
+        new_length: Option<usize>,
+    },
 }
 
 /// <rcc> revision used to change cell value (may contain formatting, but value is always present)
