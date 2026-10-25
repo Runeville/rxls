@@ -81,6 +81,43 @@ pub enum FormatPattern {
     Gray0625,
 }
 
+impl TryFrom<&str> for FormatPattern {
+    type Error = &'static str;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        match s {
+            "none" => Ok(Self::None),
+            "solid" => Ok(Self::Solid),
+            "medium" => Ok(Self::MediumGray),
+            "dark" => Ok(Self::DarkGray),
+            "light" => Ok(Self::LightGray),
+            "darkHorizontal" => Ok(Self::DarkHorizontal),
+            "darkVertical" => Ok(Self::DarkVertical),
+            "darkDown" => Ok(Self::DarkDown),
+            "darkUp" => Ok(Self::DarkUp),
+            "darkGrid" => Ok(Self::DarkGrid),
+            "darkTrellis" => Ok(Self::DarkTrellis),
+            "lightHorizontal" => Ok(Self::LightHorizontal),
+            "lightVertical" => Ok(Self::LightVertical),
+            "lightDown" => Ok(Self::LightDown),
+            "lightUp" => Ok(Self::LightUp),
+            "lightGrid" => Ok(Self::LightGrid),
+            "lightTrellis" => Ok(Self::LightTrellis),
+            "gray125" => Ok(Self::Gray125),
+            "gray0625" => Ok(Self::Gray0625),
+            _ => Err("invalid value for FormatPattern"),
+        }
+    }
+}
+
+impl TryFrom<String> for FormatPattern {
+    type Error = &'static str;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::try_from(s.as_str())
+    }
+}
+
 /// Cell fill formatting.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub struct Fill {
