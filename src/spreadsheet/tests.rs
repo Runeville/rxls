@@ -1046,7 +1046,7 @@ fn sheet_delete_dependency_fixture() -> Vec<u8> {
         let deleted = workbook.add_sheet("Delete");
         deleted.write(0, 0, "Value");
         deleted.write(1, 0, 2.0);
-        deleted.add_comment(1, 0, "remove me", Some("author"));
+        deleted.add_comment(1, 0, "remove me", Some("author"), None);
         deleted.add_table(Table {
             range: (0, 0, 1, 0),
             name: "DeletedTable".into(),
@@ -1632,7 +1632,7 @@ fn legacy_comment_create_update_delete_round_trips_and_preserves_parts() {
     let mut spreadsheet = Spreadsheet::open(&input).expect("open editable xlsx");
 
     spreadsheet
-        .set_comment("Data", 0, 0, "first note", Some("Alice"))
+        .set_comment("Data", 0, 0, "first note", Some("Alice"), None)
         .expect("create comment");
     assert_eq!(
         spreadsheet.edited_parts(),
@@ -1657,6 +1657,7 @@ fn legacy_comment_create_update_delete_round_trips_and_preserves_parts() {
             col: 0,
             text: "first note".into(),
             author: Some("Alice".into()),
+            guid: None,
         }]
     );
 
@@ -1664,7 +1665,7 @@ fn legacy_comment_create_update_delete_round_trips_and_preserves_parts() {
     let original_vml = zip_member(&created, "xl/drawings/vmlDrawing1.vml");
     let mut spreadsheet = Spreadsheet::open(&created).expect("reopen for comment update");
     spreadsheet
-        .set_comment("Data", 0, 0, "updated note", Some("Bob"))
+        .set_comment("Data", 0, 0, "updated note", Some("Bob"), None)
         .expect("update comment");
     assert_eq!(spreadsheet.edited_parts(), &["xl/comments1.xml"]);
     let updated = spreadsheet.save().expect("save updated comment");
@@ -1684,6 +1685,7 @@ fn legacy_comment_create_update_delete_round_trips_and_preserves_parts() {
             col: 0,
             text: "updated note".into(),
             author: Some("Bob".into()),
+            guid: None,
         }]
     );
 
@@ -1713,7 +1715,7 @@ fn comment_delete_preserves_other_vml_shapes_and_malformed_vml_rolls_back() {
     workbook.add_sheet("Data");
     let mut spreadsheet = Spreadsheet::open(&workbook.to_xlsx()).expect("open xlsx");
     spreadsheet
-        .set_comment("Data", 0, 0, "note", Some("Alice"))
+        .set_comment("Data", 0, 0, "note", Some("Alice"), None)
         .expect("create comment");
     let created = spreadsheet.save().expect("save comment");
 
@@ -1923,13 +1925,13 @@ fn comment_and_hyperlink_late_failures_roll_back_exactly() {
     );
 
     spreadsheet
-        .set_comment("Data", 0, 0, "original", Some("Alice"))
+        .set_comment("Data", 0, 0, "original", Some("Alice"), None)
         .expect("create rollback comment fixture");
     let with_comment = spreadsheet.save().expect("save rollback fixture");
     let mut spreadsheet = Spreadsheet::open(&with_comment).expect("reopen rollback fixture");
     let before = spreadsheet.save().expect("serialize rollback fixture");
     set_test_fail_commit_after(0);
-    let result = spreadsheet.set_comment("Data", 0, 0, "candidate", Some("Alice"));
+    let result = spreadsheet.set_comment("Data", 0, 0, "candidate", Some("Alice"), None);
     reset_test_fail_commit();
     assert!(result.is_err());
     assert!(spreadsheet.edited_parts().is_empty());

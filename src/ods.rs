@@ -2023,6 +2023,7 @@ fn parse_content(xml: &str, styles: &OdsResolvedStyles, image_parts: &ImageParts
                                     col: *col,
                                     text: text.clone(),
                                     author: author.clone(),
+                                    guid: None,
                                 });
                             }
                             for validation in &validation_template {
@@ -2299,6 +2300,7 @@ fn finish_cell(
                 col: col.saturating_add(k as u16),
                 text: comment.text.clone(),
                 author: comment.author.clone(),
+                guid: None,
             });
         }
     }

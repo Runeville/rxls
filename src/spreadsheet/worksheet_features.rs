@@ -28,6 +28,7 @@ impl Spreadsheet {
         col: u16,
         text: &str,
         author: Option<&str>,
+        guid: Option<String>,
     ) -> Result<()> {
         validate_row(row)?;
         validate_col(col)?;
@@ -39,7 +40,7 @@ impl Spreadsheet {
         let text = text.to_string();
         let author = author.map(str::to_string);
         self.mutate_atomic(move |candidate| {
-            candidate.set_comment_in_place(&sheet_name, row, col, &text, author.as_deref())
+            candidate.set_comment_in_place(&sheet_name, row, col, &text, author.as_deref(), guid)
         })
     }
 
@@ -50,6 +51,7 @@ impl Spreadsheet {
         col: u16,
         text: &str,
         author: Option<&str>,
+        guid: Option<String>,
     ) -> Result<()> {
         let package = self.package.as_mut().ok_or(Error::Zip(
             "spreadsheet is read-only for package-preserving edit",
@@ -92,6 +94,7 @@ impl Spreadsheet {
                     col,
                     text: text.to_string(),
                     author: author.map(str::to_string),
+                    guid: guid.clone(),
                 };
                 package.set_part(
                     &path,
@@ -126,6 +129,7 @@ impl Spreadsheet {
                         col,
                         text: text.to_string(),
                         author: author.map(str::to_string),
+                        guid,
                     };
                     package.set_part(
                         &path,

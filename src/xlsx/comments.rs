@@ -26,6 +26,7 @@ pub(super) fn parse_comments(xml: &str) -> Vec<Comment> {
     let mut cur_rc: Option<(u32, u16)> = None;
     let mut cur_author_id: usize = 0;
     let mut cur_text = String::new();
+    let mut cur_guid = None;
     let mut in_t = false;
     loop {
         match r.read_event() {
@@ -41,6 +42,7 @@ pub(super) fn parse_comments(xml: &str) -> Vec<Comment> {
                         .and_then(|s| s.parse::<usize>().ok())
                         .unwrap_or(0);
                     cur_text.clear();
+                    cur_guid = attr(&e, b"guid").map(|v| v.trim_matches(['{', '}']).to_string());
                 }
                 b"t" if cur_rc.is_some() => in_t = true,
                 _ => {}
@@ -76,6 +78,7 @@ pub(super) fn parse_comments(xml: &str) -> Vec<Comment> {
                             col,
                             text: std::mem::take(&mut cur_text),
                             author,
+                            guid: cur_guid.take(),
                         });
                     }
                 }

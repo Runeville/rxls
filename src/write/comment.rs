@@ -53,8 +53,13 @@ pub(crate) fn comments_xml_for_comments(comments: &[Comment]) -> String {
     s.push_str("</authors><commentList>");
     for (c, &author_id) in comments.iter().zip(&ids) {
         let cref = a1(c.row.min(MAX_ROW), c.col.min(MAX_COL));
+        let guid = c
+            .guid
+            .clone()
+            .map_or(String::new(), |guid| format!(r#" guid="{{{}}}""#, guid));
+
         s.push_str(&format!(
-            r#"<comment ref="{cref}" authorId="{author_id}"><text><r><t xml:space="preserve">{}</t></r></text></comment>"#,
+            r#"<comment ref="{cref}" authorId="{author_id}{guid}"><text><r><t xml:space="preserve">{}</t></r></text></comment>"#,
             esc_text(&c.text)
         ));
     }

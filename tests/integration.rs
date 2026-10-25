@@ -588,7 +588,7 @@ fn editable_xlsm_comment_and_hyperlink_crud_preserves_vba() {
     let input = synthetic_xlsm_with_vba();
     let mut spreadsheet = Spreadsheet::open(&input).expect("open editable xlsm");
     spreadsheet
-        .set_comment("Data", 0, 0, "created note", Some("Alice"))
+        .set_comment("Data", 0, 0, "created note", Some("Alice"), None)
         .expect("create legacy note");
     spreadsheet
         .set_external_hyperlink("Data", 0, 0, "https://example.com/created")
@@ -607,6 +607,7 @@ fn editable_xlsm_comment_and_hyperlink_crud_preserves_vba() {
             col: 0,
             text: "created note".into(),
             author: Some("Alice".into()),
+            guid: None
         }]
     );
     assert_eq!(
@@ -616,7 +617,7 @@ fn editable_xlsm_comment_and_hyperlink_crud_preserves_vba() {
 
     let mut spreadsheet = Spreadsheet::open(&created).expect("reopen xlsm for update");
     spreadsheet
-        .set_comment("Data", 0, 0, "updated note", Some("Bob"))
+        .set_comment("Data", 0, 0, "updated note", Some("Bob"), None)
         .expect("update legacy note");
     spreadsheet
         .set_internal_hyperlink("Data", 0, 0, "Data!A1")
@@ -5455,8 +5456,9 @@ fn writer_comment_helper_accepts_owned_strings() {
         0,
         String::from("owned body"),
         String::from("owned author"),
+        None,
     );
-    s.add_comment(1, 0, String::from("anonymous body"), None);
+    s.add_comment(1, 0, String::from("anonymous body"), None, None);
 
     assert_eq!(s.comments()[0].text, "owned body");
     assert_eq!(s.comments()[0].author.as_deref(), Some("owned author"));

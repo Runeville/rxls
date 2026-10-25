@@ -869,7 +869,7 @@ mod tests {
         let mut wb = Workbook::new();
         let text = "x".repeat(1024);
         wb.add_sheet("notes")
-            .add_comment(0, 0, &text, Some("reviewer"));
+            .add_comment(0, 0, &text, Some("reviewer"), None);
 
         let mut budget = 64;
         let built = super::build_comment_parts_with_budget(&wb, wb.sheets.len(), &mut budget);
@@ -884,7 +884,7 @@ mod tests {
     #[test]
     fn comment_budget_counts_content_type_records() {
         let mut sheet = Sheet::new("notes");
-        sheet.add_comment(0, 0, "review", Some("author"));
+        sheet.add_comment(0, 0, "review", Some("author"), None);
         let old_cost = super::comment::comments_xml(&sheet)
             .len()
             .saturating_add(super::comment::vml_drawing_xml(&sheet).len())
@@ -908,7 +908,7 @@ mod tests {
     #[test]
     fn comment_budget_counts_comment_records_incrementally() {
         let mut one = Sheet::new("notes");
-        one.add_comment(0, 0, "keep", Some("author"));
+        one.add_comment(0, 0, "keep", Some("author"), None);
         let one_cost = super::comment::comments_xml(&one)
             .len()
             .saturating_add(super::comment::vml_drawing_xml(&one).len())
@@ -919,8 +919,8 @@ mod tests {
             .saturating_add(super::content_type_default_cost("vml", super::CT_VML));
 
         let mut sheet = Sheet::new("notes");
-        sheet.add_comment(0, 0, "keep", Some("author"));
-        sheet.add_comment(1, 0, "drop".repeat(1024), Some("author"));
+        sheet.add_comment(0, 0, "keep", Some("author"), None);
+        sheet.add_comment(1, 0, "drop".repeat(1024), Some("author"), None);
         let mut wb = Workbook::new();
         wb.sheets.push(sheet);
 
@@ -3426,7 +3426,7 @@ print('READ_DV_OK')
         let mut wb = Workbook::new();
         let s = wb.add_sheet("c");
         s.write(0, 0, "셀");
-        s.add_comment(0, 0, "검토 필요", Some("검토자"));
+        s.add_comment(0, 0, "검토 필요", Some("검토자"), None);
         let bytes = wb.to_xlsx();
         let script = "import sys\nfrom openpyxl import load_workbook\nwb=load_workbook(sys.argv[1])\nws=wb.active\nc=ws['A1'].comment\nassert c is not None, 'no comment on A1'\nassert '검토 필요' in c.text, repr(c.text)\nprint('COMMENT_OK')\n";
         assert_opens_in_openpyxl(&bytes, script, "COMMENT_OK");

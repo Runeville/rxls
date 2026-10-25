@@ -684,6 +684,7 @@ impl Workbook {
                                             col: note.col,
                                             text,
                                             author: note.author,
+                                            guid: None,
                                         });
                                     }
                                 }

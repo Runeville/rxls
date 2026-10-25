@@ -1951,7 +1951,7 @@ mod tests {
     fn comment_xml_text_that_would_be_dropped_is_rejected() {
         let mut wb = Workbook::new();
         let sheet = wb.add_sheet("S");
-        sheet.add_comment(0, 0, "keep\u{1f}all", Some("reviewer"));
+        sheet.add_comment(0, 0, "keep\u{1f}all", Some("reviewer"), None);
 
         assert_invalid_xml_text(wb, "comment text", "keep\u{1f}all");
     }
@@ -1960,7 +1960,7 @@ mod tests {
     fn comment_author_xml_text_that_would_be_dropped_is_rejected() {
         let mut wb = Workbook::new();
         let sheet = wb.add_sheet("S");
-        sheet.add_comment(0, 0, "review", Some("review\u{1f}er"));
+        sheet.add_comment(0, 0, "review", Some("review\u{1f}er"), None);
 
         assert_invalid_xml_text(wb, "comment author", "review\u{1f}er");
     }
@@ -2187,7 +2187,7 @@ mod tests {
         ));
 
         let mut s2 = Sheet::new("S");
-        s2.add_comment(2_000_000, 0, "off grid", None); // row > MAX_ROW
+        s2.add_comment(2_000_000, 0, "off grid", None, None); // row > MAX_ROW
         let wb2 = Workbook {
             sheets: vec![s2],
             ..Default::default()

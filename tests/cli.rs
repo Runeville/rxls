@@ -1367,7 +1367,7 @@ fn cli_compare_reports_detailed_sheet_metadata_differences() {
         sheet.write(1, 0, "Yes");
         sheet.write(1, 1, "old");
         sheet.write_url_with_text(2, 0, "https://example.test/old", "link");
-        sheet.add_comment(0, 1, "old note", Some("Analyst"));
+        sheet.add_comment(0, 1, "old note", Some("Analyst"), None);
         sheet.add_table(Table {
             range: (0, 0, 1, 1),
             name: "OldTable".into(),
@@ -1385,7 +1385,7 @@ fn cli_compare_reports_detailed_sheet_metadata_differences() {
         sheet.write(1, 0, "Yes");
         sheet.write(1, 1, "old");
         sheet.write_url_with_text(2, 0, "https://example.test/new", "link");
-        sheet.add_comment(0, 1, "new note", Some("Analyst"));
+        sheet.add_comment(0, 1, "new note", Some("Analyst"), None);
         sheet.add_table(Table {
             range: (0, 0, 1, 1),
             name: "NewTable".into(),

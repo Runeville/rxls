@@ -844,6 +844,7 @@ fn parse_comments(b: &[u8]) -> Vec<Comment> {
                         col: comment.col,
                         text: comment.text,
                         author: comment.author,
+                        guid: None,
                     });
                 }
             }

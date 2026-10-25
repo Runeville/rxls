@@ -1089,7 +1089,7 @@ mod tests {
             sheet.write_url(2, 0, "https://example.com", "Link"); // cell 3
             sheet.merge(4, 0, 4, 1);
             sheet.merge(5, 0, 5, 1); // 2 merged ranges
-            sheet.add_comment(0, 0, "note", "Author"); // 1 comment
+            sheet.add_comment(0, 0, "note", "Author", None); // 1 comment
             sheet.add_data_validation(crate::DataValidation::new(
                 (6, 0, 6, 0),
                 crate::DvKind::Whole,

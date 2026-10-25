@@ -14,6 +14,8 @@ pub struct Comment {
     pub text: String,
     /// Optional author; defaults to a blank author when `None`.
     pub author: Option<String>,
+    /// Guid to connect the comment with a revision.
+    pub guid: Option<String>,
 }
 
 /// Author input for [`crate::Sheet::add_comment`].

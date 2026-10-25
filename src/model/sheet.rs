@@ -2254,12 +2254,14 @@ impl Sheet {
         col: u16,
         text: impl AsRef<str>,
         author: impl Into<CommentAuthor>,
+        guid: Option<String>,
     ) {
         self.comments.push(Comment {
             row,
             col,
             text: text.as_ref().to_string(),
             author: author.into().0,
+            guid,
         });
     }
     fn push_authored(
