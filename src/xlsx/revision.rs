@@ -3,10 +3,10 @@ use quick_xml::Reader;
 
 use super::{attr, local, text_of};
 use crate::{
-    Cell, FormatPattern, HAlign, Revision, RevisionAlignment, RevisionCellChange, RevisionChange,
-    RevisionColor, RevisionDifferentialFormat, RevisionFill, RevisionFont, RevisionFontColor,
-    RevisionLog, RevisionNumberFormat, RevisionRowColumnAction, RevisionViewAction, SheetName,
-    User, VAlign,
+    Cell, CommentAction, FormatPattern, HAlign, Revision, RevisionAlignment, RevisionCellChange,
+    RevisionChange, RevisionColor, RevisionDifferentialFormat, RevisionFill, RevisionFont,
+    RevisionFontColor, RevisionLog, RevisionNumberFormat, RevisionRowColumnAction,
+    RevisionViewAction, SheetName, User, VAlign,
 };
 
 #[derive(PartialEq)]
@@ -116,6 +116,8 @@ enum RevisionBuilder {
         guid: String,
         author: String,
         new_length: Option<usize>,
+        old_length: Option<usize>,
+        action: Option<CommentAction>,
     },
 }
 
@@ -184,12 +186,16 @@ impl RevisionBuilder {
                 guid,
                 author,
                 new_length,
+                old_length,
+                action,
             } => Some(Revision::Comment {
                 sheet_id,
                 address,
                 guid,
                 author,
                 new_length,
+                old_length,
+                action,
             }),
         }
     }
@@ -836,12 +842,15 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         .trim_matches(['{', '}'])
                         .to_string();
                     let author = attr(&e, b"author").unwrap_or_default();
+                    let old_length =
+                        attr(&e, b"oldLength").and_then(|value| value.parse::<usize>().ok());
                     let new_length =
                         attr(&e, b"newLength").and_then(|value| value.parse::<usize>().ok());
                     let address = attr(&e, b"cell").unwrap_or_default();
                     let sheet_id = attr(&e, b"sheetId")
                         .and_then(|value| value.parse::<usize>().ok())
                         .unwrap_or_default();
+                    let action = attr(&e, b"action").and_then(|v| TryInto::try_into(v).ok());
 
                     revisions.push(RevisionBuilder::Comment {
                         sheet_id,
@@ -849,6 +858,8 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         guid,
                         author,
                         new_length,
+                        old_length,
+                        action,
                     });
                 }
 

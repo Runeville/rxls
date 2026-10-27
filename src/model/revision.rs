@@ -190,7 +190,50 @@ pub enum Revision {
         author: String,
         /// newLength
         new_length: Option<usize>,
+        /// oldLength
+        old_length: Option<usize>,
+        /// action
+        action: Option<CommentAction>,
     },
+}
+
+/// "action" attribute for <rcmt>
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub enum CommentAction {
+    /// add
+    Add,
+    /// delete
+    Delete,
+}
+
+impl TryFrom<&str> for CommentAction {
+    type Error = &'static str;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        match s {
+            "add" => Ok(Self::Add),
+            "delete" => Ok(Self::Delete),
+            _ => Err("invalid value for CommentAction"),
+        }
+    }
+}
+
+impl TryFrom<String> for CommentAction {
+    type Error = &'static str;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::try_from(s.as_str())
+    }
+}
+
+impl std::fmt::Display for CommentAction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Add => write!(f, "add"),
+            Self::Delete => write!(f, "delete"),
+        }
+    }
 }
 
 /// <rcc> revision used to change cell value (may contain formatting, but value is always present)
