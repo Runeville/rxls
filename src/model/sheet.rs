@@ -2264,6 +2264,10 @@ impl Sheet {
             guid,
         });
     }
+    /// Remove a legacy cell comment / note from `(row, col)`. No-op if none exists.
+    pub fn delete_comment(&mut self, row: u32, col: u16) {
+        self.comments.retain(|c| !(c.row == row && c.col == col));
+    }
     fn push_authored(
         &mut self,
         row: u32,
