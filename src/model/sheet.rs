@@ -2264,6 +2264,18 @@ impl Sheet {
             guid,
         });
     }
+    /// Create or replace a legacy cell comment / note at `(row, col)`.
+    pub fn set_comment(
+        &mut self,
+        row: u32,
+        col: u16,
+        text: impl AsRef<str>,
+        author: impl Into<CommentAuthor>,
+        guid: Option<String>,
+    ) {
+        self.delete_comment(row, col);
+        self.add_comment(row, col, text, author, guid);
+    }
     /// Remove a legacy cell comment / note from `(row, col)`. No-op if none exists.
     pub fn delete_comment(&mut self, row: u32, col: u16) {
         self.comments.retain(|c| !(c.row == row && c.col == col));
