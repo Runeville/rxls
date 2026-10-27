@@ -59,7 +59,7 @@ pub(crate) fn comments_xml_for_comments(comments: &[Comment]) -> String {
             .map_or(String::new(), |guid| format!(r#" guid="{{{}}}""#, guid));
 
         s.push_str(&format!(
-            r#"<comment ref="{cref}" authorId="{author_id}{guid}"><text><r><t xml:space="preserve">{}</t></r></text></comment>"#,
+            r#"<comment ref="{cref}" authorId="{author_id}"{guid}><text><r><t xml:space="preserve">{}</t></r></text></comment>"#,
             esc_text(&c.text)
         ));
     }
