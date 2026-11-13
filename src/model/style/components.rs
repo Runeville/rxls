@@ -440,7 +440,32 @@ impl TryFrom<String> for BorderStyle {
     type Error = String;
 
     fn try_from(v: String) -> Result<Self, Self::Error> {
-        todo!()
+        match v.as_str() {
+            "none" => Ok(Self::None),
+            "thin" => Ok(Self::Thin),
+            "thick" => Ok(Self::Thick),
+            "medium" => Ok(Self::Medium),
+            "double" => Ok(Self::Double),
+            _ => Err("No string match for BorderStyle".to_string()),
+        }
+    }
+}
+
+impl AsRef<str> for BorderStyle {
+    fn as_ref(&self) -> &str {
+        match self {
+            Self::None => "none",
+            Self::Thin => "thin",
+            Self::Thick => "thick",
+            Self::Medium => "medium",
+            Self::Double => "double",
+        }
+    }
+}
+
+impl std::fmt::Display for BorderStyle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_ref())
     }
 }
 
