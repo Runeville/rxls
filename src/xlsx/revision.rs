@@ -3,8 +3,8 @@ use quick_xml::Reader;
 
 use super::{attr, local, text_of};
 use crate::{
-    Cell, CommentAction, FormatPattern, HAlign, Revision, RevisionAlignment,
-    RevisionBorder, RevisionBorderInfo, RevisionCellChange, RevisionChange, RevisionColor,
+    Cell, CommentAction, FormatPattern, HAlign, Revision, RevisionAlignment, RevisionBorder,
+    RevisionBorderInfo, RevisionCellChange, RevisionChange, RevisionColor,
     RevisionDifferentialFormat, RevisionFill, RevisionFont, RevisionLog, RevisionNumberFormat,
     RevisionRowColumnAction, RevisionViewAction, SheetName, User, VAlign,
 };
