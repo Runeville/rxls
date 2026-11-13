@@ -3,14 +3,15 @@ use quick_xml::Reader;
 
 use super::{attr, local, text_of};
 use crate::{
-    Cell, CommentAction, FormatPattern, HAlign, Revision, RevisionAlignment, RevisionCellChange,
-    RevisionChange, RevisionColor, RevisionDifferentialFormat, RevisionFill, RevisionFont,
-    RevisionFontColor, RevisionLog, RevisionNumberFormat, RevisionRowColumnAction,
-    RevisionViewAction, SheetName, User, VAlign,
+    Cell, CommentAction, FormatPattern, HAlign, Revision, RevisionAlignment,
+    RevisionBorder, RevisionBorderInfo, RevisionCellChange, RevisionChange, RevisionColor,
+    RevisionDifferentialFormat, RevisionFill, RevisionFont, RevisionLog, RevisionNumberFormat,
+    RevisionRowColumnAction, RevisionViewAction, SheetName, User, VAlign,
 };
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 enum ParserState {
+    None,
     /// Value <v>
     V,
     /// Text <t>
@@ -19,6 +20,10 @@ enum ParserState {
     F,
     /// Font <font>
     Font,
+    BorderLeft,
+    BorderRight,
+    BorderTop,
+    BorderBottom,
 }
 
 #[derive(Clone, Copy)]
@@ -378,7 +383,7 @@ pub(super) fn parse_revision_user_names(xml: &str) -> Vec<User> {
 pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionLog {
     let mut r = Reader::from_str(xml);
     let mut revisions: Vec<RevisionBuilder> = Vec::new();
-    let mut parser_state: Option<ParserState> = None;
+    let mut parser_state = ParserState::None;
     let mut cell_side: Option<CellSide> = None;
 
     let mut current_revision: Option<RevisionBuilder> = None;
@@ -462,12 +467,76 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                             Some(RevisionDifferentialFormat::default());
                     }
                 }
+
+                b"border" => {
+                    if let Some(RevisionBuilder::Formatting { formatting, .. }) =
+                        current_revision.as_mut()
+                    {
+                        if let Some(formatting) = formatting {
+                            formatting.border = Some(RevisionBorder::default());
+                        }
+                    }
+                }
+
+                b"left" => {
+                    parser_state = ParserState::BorderLeft;
+                    let style = attr(&e, b"style")
+                        .and_then(|v| v.try_into().ok())
+                        .unwrap_or_default();
+
+                    if let Some(RevisionBuilder::Formatting { formatting, .. }) =
+                        current_revision.as_mut()
+                    {
+                        if let Some(border) = formatting.as_mut().and_then(|f| f.border.as_mut()) {
+                            border.left = Some(RevisionBorderInfo { style, color: None })
+                        }
+                    }
+                }
+                b"right" => {
+                    parser_state = ParserState::BorderRight;
+                    let style = attr(&e, b"style")
+                        .and_then(|v| v.try_into().ok())
+                        .unwrap_or_default();
+
+                    if let Some(RevisionBuilder::Formatting { formatting, .. }) =
+                        current_revision.as_mut()
+                    {
+                        if let Some(border) = formatting.as_mut().and_then(|f| f.border.as_mut()) {
+                            border.right = Some(RevisionBorderInfo { style, color: None })
+                        }
+                    }
+                }
+                b"top" => {
+                    parser_state = ParserState::BorderTop;
+                    let style = attr(&e, b"style")
+                        .and_then(|v| v.try_into().ok())
+                        .unwrap_or_default();
+
+                    if let Some(RevisionBuilder::Formatting { formatting, .. }) =
+                        current_revision.as_mut()
+                    {
+                        if let Some(border) = formatting.as_mut().and_then(|f| f.border.as_mut()) {
+                            border.top = Some(RevisionBorderInfo { style, color: None })
+                        }
+                    }
+                }
+                b"bottom" => {
+                    parser_state = ParserState::BorderBottom;
+                    let style = attr(&e, b"style")
+                        .and_then(|v| v.try_into().ok())
+                        .unwrap_or_default();
+
+                    if let Some(RevisionBuilder::Formatting { formatting, .. }) =
+                        current_revision.as_mut()
+                    {
+                        if let Some(border) = formatting.as_mut().and_then(|f| f.border.as_mut()) {
+                            border.bottom = Some(RevisionBorderInfo { style, color: None })
                         }
                     }
                 }
 
                 b"font" => {
-                    parser_state = Some(ParserState::Font);
+                    parser_state = ParserState::Font;
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::Formatting { formatting, .. } = current_revision {
                             if let Some(formatting) = formatting.as_mut() {
@@ -498,13 +567,13 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                 }
 
                 b"v" => {
-                    parser_state = Some(ParserState::V);
+                    parser_state = ParserState::V;
                 }
                 b"t" => {
-                    parser_state = Some(ParserState::T);
+                    parser_state = ParserState::T;
                 }
                 b"f" => {
-                    parser_state = Some(ParserState::F);
+                    parser_state = ParserState::F;
                 }
 
                 _ => {}
@@ -588,21 +657,28 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     let tint = attr(&e, b"tint").and_then(|v| v.parse::<f64>().ok());
                     let auto = attr(&e, b"auto").map(|v| v == "1");
                     let indexed = attr(&e, b"indexed").and_then(|v| v.parse::<u32>().ok());
+                    let new_color = RevisionColor {
+                        rgb,
+                        theme,
+                        tint,
+                        auto,
+                        indexed,
+                    };
 
-                    if let Some(current_revision) = current_revision.as_mut() {
-                        if let RevisionBuilder::Formatting {
-                            formatting: Some(formatting),
-                            ..
-                        } = current_revision
+                    if let Some(RevisionBuilder::Formatting {
+                        formatting: Some(formatting),
+                        ..
+                    }) = current_revision.as_mut()
+                    {
                         {
-                            if let Some(font) = formatting.font.as_mut() {
-                                font.color = Some(RevisionFontColor {
-                                    rgb,
-                                    theme,
-                                    tint,
-                                    auto,
-                                    indexed,
-                                })
+                            if let Some(border) = formatting.border.as_mut() {
+                                if let Some(border_info) =
+                                    get_border_info_with_state(border, parser_state)
+                                {
+                                    border_info.color = Some(new_color);
+                                }
+                            } else if let Some(font) = formatting.font.as_mut() {
+                                font.color = Some(new_color);
                             }
                         }
                     }
@@ -786,6 +862,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         .unwrap_or_default();
                     let rgb = attr(&e, b"rgb").and_then(|rgb| parse_rgb(&rgb).ok());
                     let auto = attr(&e, b"auto").map(|v| v == "1");
+                    let indexed = attr(&e, b"indexed").and_then(|v| v.parse::<u32>().ok());
 
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::Formatting {
@@ -799,6 +876,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                     tint: Some(tint),
                                     rgb,
                                     auto,
+                                    indexed,
                                 });
                             }
                         }
@@ -814,6 +892,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         .unwrap_or_default();
                     let rgb = attr(&e, b"rgb").and_then(|rgb| parse_rgb(&rgb).ok());
                     let auto = attr(&e, b"auto").map(|v| v == "1");
+                    let indexed = attr(&e, b"indexed").and_then(|v| v.parse::<u32>().ok());
 
                     if let Some(current_revision) = current_revision.as_mut() {
                         if let RevisionBuilder::Formatting {
@@ -827,6 +906,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                     tint: Some(tint),
                                     rgb,
                                     auto,
+                                    indexed,
                                 });
                             }
                         }
@@ -872,7 +952,7 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                         CellSide::Old => &mut builder.old_cell,
                     };
                     match parser_state {
-                        Some(ParserState::V) => {
+                        ParserState::V => {
                             let value = text_of(&e);
                             if matches!(cell, Some(Cell::Bool(..))) {
                                 *cell = Some(Cell::Bool(match value.parse::<u8>() {
@@ -886,20 +966,20 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                                 *cell = Some(Cell::Text(value));
                             }
                         }
-                        Some(ParserState::T) => *cell = Some(Cell::Text(text_of(&e))),
-                        Some(ParserState::F) => {
+                        ParserState::T => *cell = Some(Cell::Text(text_of(&e))),
+                        ParserState::F => {
                             *cell = Some(Cell::Formula {
                                 formula: text_of(&e),
                                 cached: Box::new(Cell::Text("".to_string())),
                             });
                         }
-                        Some(ParserState::Font) | None => {}
+                        _ => {}
                     }
                 }
             }
 
             Ok(Event::End(e)) => match local(e.name().as_ref()) {
-                b"v" | b"f" | b"t" => parser_state = None,
+                b"v" | b"f" | b"t" => parser_state = ParserState::None,
                 b"nc" | b"oc" => cell_side = None,
 
                 b"rcc" => {
@@ -933,6 +1013,10 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
                     }
                 }
 
+                b"left" | b"right" | b"top" | b"bottom" => {
+                    parser_state = ParserState::None;
+                }
+
                 _ => {}
             },
 
@@ -959,4 +1043,17 @@ fn parse_rgb(hex: &str) -> Result<[u8; 3], std::num::ParseIntError> {
     let [_, r, g, b] = color.to_be_bytes();
 
     Ok([r, g, b])
+}
+
+fn get_border_info_with_state(
+    border: &mut RevisionBorder,
+    state: ParserState,
+) -> Option<&mut RevisionBorderInfo> {
+    match state {
+        ParserState::BorderLeft => border.left.as_mut(),
+        ParserState::BorderRight => border.right.as_mut(),
+        ParserState::BorderTop => border.top.as_mut(),
+        ParserState::BorderBottom => border.bottom.as_mut(),
+        _ => None,
+    }
 }

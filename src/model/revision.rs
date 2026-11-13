@@ -3,7 +3,7 @@ use std::fmt;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-use super::{Cell, FormatPattern, HAlign, VAlign};
+use super::{BorderStyle, Cell, FormatPattern, HAlign, VAlign};
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
@@ -406,6 +406,33 @@ pub struct DifferentialFormat {
     /// <alignment> alignment
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub alignment: Option<Alignment>,
+    /// <borders> borders
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub border: Option<Border>,
+}
+
+/// <border> border
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct Border {
+    /// <left> left border
+    pub left: Option<BorderInfo>,
+    /// <right> right border
+    pub right: Option<BorderInfo>,
+    /// <top> top border
+    pub top: Option<BorderInfo>,
+    /// <bottom> bottom border
+    pub bottom: Option<BorderInfo>,
+}
+
+/// border info
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct BorderInfo {
+    /// style param
+    pub style: BorderStyle,
+    /// color tag
+    pub color: Option<Color>,
 }
 
 /// <alignment> alignment
@@ -434,7 +461,7 @@ pub struct Fill {
 
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-/// bgColor and fgColor props
+/// color
 pub struct Color {
     /// theme attribute
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
@@ -448,6 +475,9 @@ pub struct Color {
     /// auto attribute
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub auto: Option<bool>,
+    /// indexed attribute
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
+    pub indexed: Option<u32>,
 }
 
 /// <numFmt> number format
@@ -566,26 +596,5 @@ pub struct Font {
     pub size: Option<f32>,
     /// <color> font color
     #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub color: Option<FontColor>,
-}
-
-/// <color>
-#[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-pub struct FontColor {
-    /// theme attribute
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub theme: Option<u8>,
-    /// tint attribute
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub tint: Option<f64>,
-    /// rgb attribute
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub rgb: Option<[u8; 3]>,
-    /// auto attribute
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub auto: Option<bool>,
-    /// indexed attribute
-    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
-    pub indexed: Option<u32>,
+    pub color: Option<Color>,
 }

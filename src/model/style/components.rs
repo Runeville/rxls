@@ -421,6 +421,7 @@ impl TextRun {
 
 /// A single border edge style.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum BorderStyle {
     /// No edge.
     #[default]
@@ -433,6 +434,14 @@ pub enum BorderStyle {
     Thick,
     /// Double edge.
     Double,
+}
+
+impl TryFrom<String> for BorderStyle {
+    type Error = String;
+
+    fn try_from(v: String) -> Result<Self, Self::Error> {
+        todo!()
+    }
 }
 
 /// Cell borders (per edge).

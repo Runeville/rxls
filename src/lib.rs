@@ -113,12 +113,13 @@ pub use model::{
     HeaderFooterMetadata, HeaderRow, Image, ImageFmt, ImportedAxisMeasure, LocalDefinedName,
     OoxmlImplicitRowHeight, PageSetup, Picture, PrintFidelity, PrintLoss, PrintLossKind,
     PrintMetadata, PrintPageOrder, ProtectionOptions, Range, RangeRow, RangeRowCells,
-    RangeRowUsedCells, RangeRows, Reader, Revision, RevisionAlignment, RevisionCellChange,
-    RevisionChange, RevisionColor, RevisionData, RevisionDifferentialFormat, RevisionFill,
-    RevisionFont, RevisionFontColor, RevisionLog, RevisionNumberFormat, RevisionRowColumnAction,
-    RevisionViewAction, Series, Sheet, SheetMetadata, SheetName, SheetType, SheetView,
-    SheetVisible, Sparkline, SparklineKind, StyleFidelity, StyleLoss, StyleLossKind, Table,
-    TextRun, User, VAlign, Workbook, WorkbookMetadata, XlsbDefaultColumnWidth,
+    RangeRowUsedCells, RangeRows, Reader, Revision, RevisionAlignment, RevisionBorder,
+    RevisionBorderInfo, RevisionCellChange, RevisionChange, RevisionColor, RevisionData,
+    RevisionDifferentialFormat, RevisionFill, RevisionFont, RevisionLog, RevisionNumberFormat,
+    RevisionRowColumnAction, RevisionViewAction, Series, Sheet, SheetMetadata, SheetName,
+    SheetType, SheetView, SheetVisible, Sparkline, SparklineKind, StyleFidelity, StyleLoss,
+    StyleLossKind, Table, TextRun, User, VAlign, Workbook, WorkbookMetadata,
+    XlsbDefaultColumnWidth,
 };
 #[cfg(feature = "chrono")]
 pub use model::{excel_serial_to_duration, excel_serial_to_naive_datetime};
