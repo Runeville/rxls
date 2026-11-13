@@ -424,47 +424,44 @@ pub(super) fn parse_revision(xml: &str, revision_ref: &RevisionRef) -> RevisionL
 
                 b"nc" => {
                     cell_side = Some(CellSide::New);
-                    if let Some(current_revision) = current_revision.as_mut() {
-                        let is_bool = attr(&e, b"t").is_some_and(|value| value == "b");
-                        if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
-                            cell_change_builder.address = attr(&e, b"r");
-                            cell_change_builder.new_cell = is_bool.then_some(Cell::Bool(false));
-                        }
+                    let is_bool = attr(&e, b"t").is_some_and(|value| value == "b");
+
+                    if let Some(RevisionBuilder::CellChange(builder)) = current_revision.as_mut() {
+                        builder.address = attr(&e, b"r");
+                        builder.new_cell = is_bool.then_some(Cell::Bool(false));
                     }
                 }
 
                 b"oc" => {
                     cell_side = Some(CellSide::Old);
-                    if let Some(current_revision) = current_revision.as_mut() {
-                        let is_bool = attr(&e, b"t").is_some_and(|value| value == "b");
-                        if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
-                            cell_change_builder.address = attr(&e, b"r");
-                            cell_change_builder.old_cell = is_bool.then_some(Cell::Bool(false));
-                        }
+                    let is_bool = attr(&e, b"t").is_some_and(|value| value == "b");
+
+                    if let Some(RevisionBuilder::CellChange(builder)) = current_revision.as_mut() {
+                        builder.address = attr(&e, b"r");
+                        builder.old_cell = is_bool.then_some(Cell::Bool(false));
                     }
                 }
 
                 b"dxf" => {
-                    if let Some(current_revision) = current_revision.as_mut() {
-                        if let RevisionBuilder::Formatting { formatting, .. } = current_revision {
-                            *formatting = Some(RevisionDifferentialFormat::default());
-                        }
+                    if let Some(RevisionBuilder::Formatting { formatting, .. }) =
+                        current_revision.as_mut()
+                    {
+                        *formatting = Some(RevisionDifferentialFormat::default());
                     }
                 }
 
                 b"ndxf" => {
-                    if let Some(current_revision) = current_revision.as_mut() {
-                        if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
-                            cell_change_builder.new_differential_format =
-                                Some(RevisionDifferentialFormat::default());
-                        }
+                    if let Some(RevisionBuilder::CellChange(builder)) = current_revision.as_mut() {
+                        builder.new_differential_format =
+                            Some(RevisionDifferentialFormat::default());
                     }
                 }
                 b"odxf" => {
-                    if let Some(current_revision) = current_revision.as_mut() {
-                        if let RevisionBuilder::CellChange(cell_change_builder) = current_revision {
-                            cell_change_builder.old_differential_format =
-                                Some(RevisionDifferentialFormat::default());
+                    if let Some(RevisionBuilder::CellChange(builder)) = current_revision.as_mut() {
+                        builder.old_differential_format =
+                            Some(RevisionDifferentialFormat::default());
+                    }
+                }
                         }
                     }
                 }
