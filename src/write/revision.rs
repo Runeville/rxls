@@ -1,13 +1,13 @@
 use std::fmt::Write;
 
 use crate::write::xml::{NS_AC, NS_MAIN, NS_MC, NS_PKG_REL, NS_R, REL_REVISION_LOG, XML_DECL};
-use crate::{Cell, FormatPattern, Revision, RevisionLog, User};
+use crate::{Cell, FormatPattern, Revision, RevisionBorderInfo, RevisionColor, RevisionLog, User};
 
 pub(super) fn revision_headers_xml(revision_logs: &[RevisionLog]) -> String {
     let mut s = String::new();
     s.push_str(XML_DECL);
     write!(
-        s, 
+        s,
         r#"<headers xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" guid="{{{}}}" diskRevisions="1" revisionId="{}" version="3">"#,
         revision_logs.last().unwrap().guid,
         revision_logs.len()
@@ -60,27 +60,28 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                 let odxf_s = revision_cell_change
                     .old_differential_format
                     .as_ref()
-                    .map_or("", |_| r#" odxf="1""#);
+                    .map(|_| r#" odxf="1""#)
+                    .unwrap_or_default();
 
                 let dxf_s = revision_cell_change
                     .new_differential_format
                     .as_ref()
-                    .map_or("", |_| r#" dxf="1""#);
+                    .map(|_| r#" dxf="1""#)
+                    .unwrap_or_default();
 
                 let num_fmt_s = revision_cell_change
                     .new_differential_format
                     .as_ref()
                     .and_then(|format| format.number_format.as_ref())
-                    .map_or(String::new(), |num_fmt| {
-                        format!(r#" numFmtId="{}""#, num_fmt.number_format_id)
-                    });
+                    .map(|num_fmt| format!(r#" numFmtId="{}""#, num_fmt.number_format_id))
+                    .unwrap_or_default();
 
                 write!(
                     s,
                     r#"<rcc rId="{}" sId="{}"{odxf_s}{dxf_s}{num_fmt_s}>"#,
-                    revision_cell_change.revision_id,
-                    revision_cell_change.sheet_id
-                ).unwrap();
+                    revision_cell_change.revision_id, revision_cell_change.sheet_id
+                )
+                .unwrap();
 
                 // <oc>
                 match &revision_cell_change.old_cell {
@@ -144,7 +145,12 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     Some(format) => {
                         s.push_str("<odxf>");
                         if let Some(num_fmt) = &format.number_format.as_ref() {
-                            write!(s, r#"<numFmt numFmtId="{}" formatCode="{}"/>"#, num_fmt.number_format_id, num_fmt.format_code).unwrap();
+                            write!(
+                                s,
+                                r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
+                                num_fmt.number_format_id, num_fmt.format_code
+                            )
+                            .unwrap();
                         }
                         s.push_str("</odxf>");
                     }
@@ -156,7 +162,12 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     Some(format) => {
                         s.push_str("<ndxf>");
                         if let Some(number_format) = &format.number_format {
-                            write!(s, r#"<numFmt numFmtId="{}" formatCode="{}"/>"#, number_format.number_format_id, number_format.format_code).unwrap();
+                            write!(
+                                s,
+                                r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
+                                number_format.number_format_id, number_format.format_code
+                            )
+                            .unwrap();
                         }
                         s.push_str("</ndxf>");
                     }
@@ -215,7 +226,11 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     .map(|v| format!(r#" length="{v}""#))
                     .unwrap_or_default();
 
-                write!(s, r#"<rfmt sheetId="{sheet_id}" sqref="{address}"{start}{length}>"#).unwrap();
+                write!(
+                    s,
+                    r#"<rfmt sheetId="{sheet_id}" sqref="{address}"{start}{length}>"#
+                )
+                .unwrap();
 
                 if let Some(formatting) = formatting {
                     s.push_str("<dxf>");
@@ -254,27 +269,8 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                             write!(s, r#"<sz val="{size}"/>"#).unwrap();
                         }
                         if let Some(color) = font.color {
-                            let theme = color
-                                .theme
-                                .map_or(String::new(), |t| format!(r#" theme="{t}""#));
-
-                            let tint = color
-                                .tint
-                                .map_or(String::new(), |t| format!(r#" tint="{t}""#));
-
-                            let rgb = color.rgb.map_or(String::new(), |[r, g, b]| {
-                                format!(r#" rgb="FF{r:02X}{g:02X}{b:02X}""#)
-                            });
-
-                            let indexed = color.indexed.map_or(String::new(), |i| {
-                                format!(r#" indexed="{i}""#)
-                            });
-
-                            let auto = color.auto.map_or(String::new(), |a| {
-                                format!(r#" auto="{}""#, if a { "1" } else { "0" })
-                            });
-
-                            write!(s, r#"<color{theme}{rgb}{indexed}{tint}{auto}/>"#).unwrap();
+                            let color = get_color_string(&color);
+                            write!(s, "{color}").unwrap();
                         }
 
                         if let Some(name) = font.name {
@@ -293,7 +289,12 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     }
 
                     if let Some(number_format) = formatting.number_format {
-                        write!(s, r#"<numFmt numFmtId="{}" formatCode="{}"/>"#, number_format.number_format_id, number_format.format_code).unwrap();
+                        write!(
+                            s,
+                            r#"<numFmt numFmtId="{}" formatCode="{}"/>"#,
+                            number_format.number_format_id, number_format.format_code
+                        )
+                        .unwrap();
                     }
 
                     if let Some(fill) = formatting.fill {
@@ -307,19 +308,23 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                         if let Some(background) = fill.background {
                             let theme = background
                                 .theme
-                                .map_or(String::new(), |t| format!(r#" theme="{t}""#));
+                                .map(|t| format!(r#" theme="{t}""#))
+                                .unwrap_or_default();
 
                             let tint = background
                                 .tint
-                                .map_or(String::new(), |t| format!(r#" tint="{t}""#));
+                                .map(|t| format!(r#" tint="{t}""#))
+                                .unwrap_or_default();
 
-                            let rgb = background.rgb.map_or(String::new(), |[r, g, b]| {
-                                format!(r#" rgb="FF{r:02X}{g:02X}{b:02X}""#)
-                            });
+                            let rgb = background
+                                .rgb
+                                .map(|[r, g, b]| format!(r#" rgb="FF{r:02X}{g:02X}{b:02X}""#))
+                                .unwrap_or_default();
 
-                            let auto = background.auto.map_or(String::new(), |a| {
-                                format!(r#" auto="{}""#, if a { "1" } else { "0" })
-                            });
+                            let auto = background
+                                .auto
+                                .map(|a| format!(r#" auto="{}""#, if a { "1" } else { "0" }))
+                                .unwrap_or_default();
 
                             write!(s, r"<bgColor{theme}{tint}{rgb}{auto}/>").unwrap();
                         }
@@ -334,13 +339,15 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                                 .map(|t| format!(r#" tint="{t}""#))
                                 .unwrap_or_default();
 
-                            let rgb = foreground.rgb.map_or(String::new(), |[r, g, b]| {
-                                format!(r#" rgb="FF{r:02X}{g:02X}{b:02X}""#)
-                            });
+                            let rgb = foreground
+                                .rgb
+                                .map(|[r, g, b]| format!(r#" rgb="FF{r:02X}{g:02X}{b:02X}""#))
+                                .unwrap_or_default();
 
-                            let auto = foreground.auto.map_or(String::new(), |a| {
-                                format!(r#" auto="{}""#, if a { "1" } else { "0" })
-                            });
+                            let auto = foreground
+                                .auto
+                                .map(|a| format!(r#" auto="{}""#, if a { "1" } else { "0" }))
+                                .unwrap_or_default();
 
                             write!(s, r"<fgColor{theme}{tint}{rgb}{auto}/>").unwrap();
                         }
@@ -350,15 +357,28 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
                     }
 
                     if let Some(alignment) = formatting.alignment.as_ref() {
-                        let horizontal = alignment.horizontal.map_or(String::new(), |h| {
-                            format!(r#" horizontal="{h}""#)
-                        });
-                        let vertical = alignment.vertical.map_or(String::new(), |v| {
-                            format!(r#" vertical="{v}""#)
-                        });
+                        let horizontal = alignment
+                            .horizontal
+                            .map(|v| format!(r#" horizontal="{v}""#))
+                            .unwrap_or_default();
+                        let vertical = alignment
+                            .vertical
+                            .map(|v| format!(r#" vertical="{v}""#))
+                            .unwrap_or_default();
 
-                        // s.push_str("<alignment{horizontal}{vertical}/>");
                         write!(s, "<alignment{vertical}{horizontal}/>").unwrap();
+                    }
+
+                    if let Some(border) = formatting.border.as_ref() {
+                        write!(s, "<border>").unwrap();
+
+                        let left = format_border_side(border.left.as_ref(), "left");
+                        let right = format_border_side(border.right.as_ref(), "right");
+                        let top = format_border_side(border.top.as_ref(), "top");
+                        let bottom = format_border_side(border.bottom.as_ref(), "bottom");
+
+                        write!(s, "{left}{right}{top}{bottom}").unwrap();
+                        write!(s, "</border>").unwrap();
                     }
 
                     s.push_str("</dxf>");
@@ -366,13 +386,26 @@ pub(super) fn revision_log_xml(revision_log: &RevisionLog) -> String {
 
                 s.push_str("</rfmt>");
             }
-            Revision::Comment {sheet_id, address, guid, author, new_length, old_length, action} => {
-                let old_length = old_length.map_or(String::new(), |v| format!(r#" oldLength="{v}""#));
-                let new_length = new_length.map_or(String::new(), |v| format!(r#" newLength="{v}""#));
-                let action = action.map_or(String::new(), |v| format!(r#" action="{v}""#));
+            Revision::Comment {
+                sheet_id,
+                address,
+                guid,
+                author,
+                new_length,
+                old_length,
+                action,
+            } => {
+                let old_length = old_length
+                    .map(|v| format!(r#" oldLength="{v}""#))
+                    .unwrap_or_default();
+                let new_length = new_length
+                    .map(|v| format!(r#" newLength="{v}""#))
+                    .unwrap_or_default();
+                let action = action
+                    .map(|v| format!(r#" action="{v}""#))
+                    .unwrap_or_default();
 
                 write!(s, r#"<rcmt author="{author}" guid="{{{guid}}}" sheetId="{sheet_id}" cell="{address}"{action}{old_length}{new_length}/>"#).unwrap();
-
             }
         }
     }
@@ -395,7 +428,12 @@ pub(super) fn revisions_user_names_xml(users: &[User]) -> String {
     write!(s, r#"<users xmlns="{NS_MAIN}" xmlns:r="{NS_R}" xmlns:mc="{NS_MC}" xmlns:x14ac="{NS_AC}" mc:Ignorable="x14ac" count="{}">"#, users.len()).unwrap();
 
     for user in users {
-        write!(s, r#"<userInfo guid="{{{}}}" name="{}" id="{}" dateTime="{}"/>"#, user.guid, user.name, user.id, user.datetime).unwrap();
+        write!(
+            s,
+            r#"<userInfo guid="{{{}}}" name="{}" id="{}" dateTime="{}"/>"#,
+            user.guid, user.name, user.id, user.datetime
+        )
+        .unwrap();
     }
     s.push_str("</users>");
 
@@ -407,8 +445,64 @@ pub(super) fn revision_headers_rels(n_revision_logs: usize) -> String {
     s.push_str(XML_DECL);
     write!(s, r#"<Relationships xmlns="{NS_PKG_REL}">"#).unwrap();
     for i in 0..n_revision_logs {
-        write!(s, r#"<Relationship Id="rId{}" Type="{REL_REVISION_LOG}" Target="revisionLog{}.xml"/>"#, i + 1, i + 1).unwrap();
+        write!(
+            s,
+            r#"<Relationship Id="rId{}" Type="{REL_REVISION_LOG}" Target="revisionLog{}.xml"/>"#,
+            i + 1,
+            i + 1
+        )
+        .unwrap();
     }
     s.push_str("</Relationships>");
     s
+}
+
+fn get_color_string(color: &RevisionColor) -> String {
+    let theme = color
+        .theme
+        .map(|t| format!(r#" theme="{t}""#))
+        .unwrap_or_default();
+
+    let tint = color
+        .tint
+        .map(|t| format!(r#" tint="{t}""#))
+        .unwrap_or_default();
+
+    let rgb = color
+        .rgb
+        .map(|[r, g, b]| format!(r#" rgb="FF{r:02X}{g:02X}{b:02X}""#))
+        .unwrap_or_default();
+
+    let indexed = color
+        .indexed
+        .map(|i| format!(r#" indexed="{i}""#))
+        .unwrap_or_default();
+
+    let auto = color
+        .auto
+        .map(|a| format!(r#" auto="{}""#, if a { "1" } else { "0" }))
+        .unwrap_or_default();
+
+    format!("<color{theme}{rgb}{indexed}{tint}{auto}/>")
+}
+
+fn format_border_side(side: Option<&RevisionBorderInfo>, name: &str) -> String {
+    let Some(side) = side else {
+        return format!("<{name}/>");
+    };
+
+    let color = side
+        .color
+        .as_ref()
+        .map(get_color_string)
+        .unwrap_or_default();
+
+    format!(
+        r#"
+        <{name} style="{}">
+            {color}
+        </{name}>
+        "#,
+        side.style
+    )
 }
