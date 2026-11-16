@@ -480,6 +480,30 @@ pub struct Color {
     pub indexed: Option<u32>,
 }
 
+impl Color {
+    /// Resolve this revision color to an RGB color using the provided theme and
+    /// indexed palettes.
+    ///
+    /// Precedence follows SpreadsheetML color attributes: `rgb`, then `theme`,
+    /// then `indexed`. `tint` is applied to theme/indexed results when finite.
+    pub fn to_rgb(
+        &self,
+        theme_colors: &[crate::Color; 12],
+        indexed_colors: &[crate::Color],
+    ) -> Option<crate::Color> {
+        if let Some(rgb) = self.rgb {
+            return Some(crate::Color(rgb));
+        }
+        if let Some(theme) = self.theme {
+            return crate::theme_color_rgb(u32::from(theme), self.tint, theme_colors);
+        }
+        if let Some(indexed) = self.indexed {
+            return crate::indexed_color_rgb(indexed, self.tint, indexed_colors);
+        }
+        None
+    }
+}
+
 /// <numFmt> number format
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
