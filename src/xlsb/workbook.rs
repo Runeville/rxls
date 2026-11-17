@@ -7,7 +7,7 @@ use super::{
     MAX_XLSB_COL_INDEX, MAX_XLSB_ROW_INDEX,
 };
 
-/// Returns the `(sheet name, rel id, hsState)` triples, whether the workbook
+/// Returns the `(sheet name, sheet id, rel id, hsState)` tuples, whether the workbook
 /// uses the 1904 date system (`BrtWbProp` bit 0, matching calamine and
 /// `[MS-XLSB]`), the active sheet index from `BrtBookView.itabCur`, workbook
 /// defined names, workbook structure protection from `BrtBookProtection`, and
@@ -43,11 +43,12 @@ pub(super) fn parse_workbook(
         if rt == BRT_BUNDLE_SH {
             // hsState:u32, iTabID:u32, strRelID: XLNullableWideString, strName: XLWideString.
             let hs_state = u32le(p, 0).unwrap_or(0);
+            let sheet_id = u32le(p, 4);
             let Some((rid, used)) = nullable_wide(p, 8) else {
                 continue;
             };
             if let Some((name, _)) = wide_string(p, 8 + used) {
-                out.push((name, rid, hs_state));
+                out.push((name, sheet_id, rid, hs_state));
             }
         } else if rt == BRT_WB_PROP {
             date1904 = p.first().is_some_and(|byte| byte & 0x1 != 0);
@@ -71,7 +72,7 @@ pub(super) fn parse_workbook(
             protect_structure |= u16le(p, 4).is_some_and(|flags| flags & 0x0001 != 0);
         }
     }
-    let sheet_names: Vec<String> = out.iter().map(|(name, _, _)| name.clone()).collect();
+    let sheet_names: Vec<String> = out.iter().map(|(name, _, _, _)| name.clone()).collect();
     defined_names.extend(raw_defined_names.into_iter().map(|name| {
         let context = crate::ptg::Context {
             biff12: true,

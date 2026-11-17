@@ -274,21 +274,25 @@ fn xls_boundsheet_preserves_sheet_types_end_to_end() {
                 name: "Data".to_string(),
                 typ: SheetType::WorkSheet,
                 visible: SheetVisible::Visible,
+                sheet_id: None,
             },
             SheetMetadata {
                 name: "Macro".to_string(),
                 typ: SheetType::MacroSheet,
                 visible: SheetVisible::Hidden,
+                sheet_id: None,
             },
             SheetMetadata {
                 name: "Chart".to_string(),
                 typ: SheetType::ChartSheet,
                 visible: SheetVisible::Visible,
+                sheet_id: None,
             },
             SheetMetadata {
                 name: "Vba".to_string(),
                 typ: SheetType::Vba,
                 visible: SheetVisible::VeryHidden,
+                sheet_id: None,
             },
         ]
     );

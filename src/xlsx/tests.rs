@@ -1444,8 +1444,8 @@ fn workbook_sheet_visibility_and_defined_names() {
     // names. A built-in `_xlnm.*` name is skipped; a user name is kept.
     let xml = r#"<workbook>
             <sheets>
-                <sheet name="Vis" r:id="rId1"/>
-                <sheet name="Hid" state="hidden" r:id="rId2"/>
+                <sheet name="Vis" sheetId="3" r:id="rId1"/>
+                <sheet name="Hid" sheetId="7" state="hidden" r:id="rId2"/>
                 <sheet name="VHid" state="veryHidden" r:id="rId3"/>
             </sheets>
             <definedNames>
@@ -1456,6 +1456,9 @@ fn workbook_sheet_visibility_and_defined_names() {
         </workbook>"#;
     let parsed = parse_workbook(xml);
     assert_eq!(parsed.sheets.len(), 3);
+    assert_eq!(parsed.sheets[0].sheet_id, Some(3));
+    assert_eq!(parsed.sheets[1].sheet_id, Some(7));
+    assert_eq!(parsed.sheets[2].sheet_id, None);
     assert_eq!(parsed.sheets[0].visibility, Visibility::Visible);
     assert_eq!(parsed.sheets[1].visibility, Visibility::Hidden);
     assert_eq!(parsed.sheets[2].visibility, Visibility::VeryHidden);
@@ -1486,7 +1489,7 @@ fn hidden_sheet_and_defined_name_end_to_end() {
     let parts = [
         (
             "xl/workbook.xml",
-            r#"<workbook><workbookPr/><sheets><sheet name="Data" r:id="rId1"/><sheet name="Secret" state="hidden" r:id="rId2"/></sheets><definedNames><definedName name="TaxRate">Data!$A$1</definedName></definedNames></workbook>"#,
+            r#"<workbook><workbookPr/><sheets><sheet name="Data" sheetId="2" r:id="rId1"/><sheet name="Secret" sheetId="9" state="hidden" r:id="rId2"/></sheets><definedNames><definedName name="TaxRate">Data!$A$1</definedName></definedNames></workbook>"#,
         ),
         (
             "xl/_rels/workbook.xml.rels",
@@ -1512,6 +1515,10 @@ fn hidden_sheet_and_defined_name_end_to_end() {
     assert!(!wb.sheets[0].is_hidden(), "Data is visible");
     assert!(wb.sheets[1].is_hidden(), "Secret is hidden");
     assert!(!wb.sheets[1].is_very_hidden());
+    assert_eq!(wb.sheets[0].sheet_id(), Some(2));
+    assert_eq!(wb.sheets[1].sheet_id(), Some(9));
+    assert_eq!(wb.sheets_metadata()[0].sheet_id(), Some(2));
+    assert_eq!(wb.worksheet_metadata("Secret").unwrap().sheet_id(), Some(9));
     assert_eq!(
         wb.defined_names(),
         &[("TaxRate".to_string(), "Data!$A$1".to_string())]

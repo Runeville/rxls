@@ -302,13 +302,14 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         formula_names,
         local_defined_names,
     ) = parse_workbook(&workbook_bin, &external_names);
-    let formula_sheet_names: Vec<String> = names.iter().map(|(name, _, _)| name.clone()).collect();
+    let formula_sheet_names: Vec<String> =
+        names.iter().map(|(name, _, _, _)| name.clone()).collect();
 
     let mut budget = crate::MAX_TEXT_BYTES;
     let mut chart_budget = crate::xlsx::ChartImportBudget::default();
     let mut sheets = Vec::with_capacity(names.len().min(1 << 16));
     let mut selected_sheet_fallback = None;
-    for (sheet_index, (name, rid, hs_state)) in names.into_iter().enumerate() {
+    for (sheet_index, (name, sheet_id, rid, hs_state)) in names.into_iter().enumerate() {
         let relationship = workbook_relationships.as_deref().and_then(|relationships| {
             relationships
                 .iter()
@@ -441,6 +442,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         sheets.push(Sheet {
             name,
             is_worksheet,
+            sheet_id,
             style_fidelity,
             sheet_type: Some(sheet_type),
             cells,
@@ -712,7 +714,7 @@ fn parse_shared_string(p: &[u8]) -> SharedString {
     SharedString { text, runs }
 }
 
-type WorkbookSheets = Vec<(String, String, u32)>;
+type WorkbookSheets = Vec<(String, Option<u32>, String, u32)>;
 type DefinedNames = Vec<(String, String)>;
 type SheetRange = (u32, u16, u32, u16);
 type SheetRanges = Vec<SheetRange>;

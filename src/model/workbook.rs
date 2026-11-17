@@ -867,6 +867,7 @@ impl Workbook {
                 name: sheet.name.clone(),
                 typ: sheet.sheet_type(),
                 visible: sheet.visible(),
+                sheet_id: sheet.sheet_id(),
             })
             .collect()
     }

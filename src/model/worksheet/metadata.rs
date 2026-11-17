@@ -45,6 +45,8 @@ pub struct SheetMetadata {
     pub typ: SheetType,
     /// Sheet visibility.
     pub visible: SheetVisible,
+    /// Excel-assigned sheet identifier from workbook metadata, when available.
+    pub sheet_id: Option<u32>,
 }
 
 impl SheetMetadata {
@@ -61,6 +63,11 @@ impl SheetMetadata {
     /// Sheet visibility.
     pub fn visible(&self) -> SheetVisible {
         self.visible
+    }
+
+    /// Excel-assigned sheet identifier from workbook metadata, when available.
+    pub fn sheet_id(&self) -> Option<u32> {
+        self.sheet_id
     }
 
     /// `true` when this metadata describes a regular worksheet grid.
@@ -146,6 +153,8 @@ pub struct WorksheetMetadata<'a> {
     pub sheet_type: SheetType,
     /// Sheet visibility.
     pub visible: SheetVisible,
+    /// Excel-assigned sheet identifier from workbook metadata, when available.
+    pub sheet_id: Option<u32>,
     /// Used cell dimensions as `(first_row, first_col, last_row, last_col)`.
     pub dimensions: Option<(u32, u16, u32, u16)>,
     /// Merged cell ranges.
@@ -208,6 +217,11 @@ impl<'a> WorksheetMetadata<'a> {
     /// Sheet visibility.
     pub fn visible(&self) -> SheetVisible {
         self.visible
+    }
+
+    /// Excel-assigned sheet identifier from workbook metadata, when available.
+    pub fn sheet_id(&self) -> Option<u32> {
+        self.sheet_id
     }
 
     /// `true` when this metadata describes a regular worksheet grid.

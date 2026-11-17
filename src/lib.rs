@@ -53,10 +53,10 @@ mod export;
 mod format;
 mod ftab;
 mod model;
-mod ooxml_color;
 #[cfg(feature = "ods")]
 mod ods;
 mod ole;
+mod ooxml_color;
 #[cfg(feature = "xlsx")]
 mod package;
 mod provenance;
@@ -85,10 +85,6 @@ pub use eval::{FormulaEvaluation, FormulaUnsupportedReason};
 pub use export::{
     export_csv, export_html, export_markdown, CsvExportError, CsvFormulaPolicy, CsvNewline,
     CsvOptions, MarkupExportError, MarkupFormat, DEFAULT_EXPORT_MAX_BYTES,
-};
-pub use ooxml_color::{
-    apply_tint, default_theme_color_rgb, indexed_color_rgb, theme_color_rgb, theme_color_rgb_opt,
-    DEFAULT_INDEXED_COLORS, DEFAULT_OFFICE_THEME_COLORS,
 };
 #[cfg(all(feature = "serde", feature = "chrono"))]
 pub use model::{
@@ -128,6 +124,10 @@ pub use model::{
 };
 #[cfg(feature = "chrono")]
 pub use model::{excel_serial_to_duration, excel_serial_to_naive_datetime};
+pub use ooxml_color::{
+    apply_tint, default_theme_color_rgb, indexed_color_rgb, theme_color_rgb, theme_color_rgb_opt,
+    DEFAULT_INDEXED_COLORS, DEFAULT_OFFICE_THEME_COLORS,
+};
 pub use provenance::{ContainerParseMode, ParseProvenance, RecoveryCode, MAX_PARSE_RECOVERY_CODES};
 pub use report::{
     ReportEvaluation, ReportFeatures, ReportProperties, ReportStats, WorkbookReport,

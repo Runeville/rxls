@@ -18,6 +18,7 @@ pub(super) enum Visibility {
 /// One ordered `<sheet>` entry from workbook metadata.
 pub(super) struct SheetRef {
     pub(super) name: String,
+    pub(super) sheet_id: Option<u32>,
     pub(super) rid: String,
     pub(super) visibility: Visibility,
 }
@@ -76,6 +77,7 @@ pub(super) fn parse_workbook(xml: &str) -> ParsedWorkbook {
                 }
                 b"sheet" => {
                     let name = attr(&e, b"name").unwrap_or_default();
+                    let sheet_id = attr(&e, b"sheetId").and_then(|s| s.parse::<u32>().ok());
                     let rid = attr(&e, b"id").unwrap_or_default();
                     let visibility = match attr(&e, b"state").as_deref() {
                         Some(s) if s.eq_ignore_ascii_case("hidden") => Visibility::Hidden,
@@ -84,6 +86,7 @@ pub(super) fn parse_workbook(xml: &str) -> ParsedWorkbook {
                     };
                     sheets.push(SheetRef {
                         name,
+                        sheet_id,
                         rid,
                         visibility,
                     });

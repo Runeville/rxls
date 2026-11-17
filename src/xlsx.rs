@@ -196,6 +196,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         sheet_idx,
         SheetRef {
             name,
+            sheet_id,
             rid,
             visibility,
         },
@@ -396,6 +397,7 @@ pub(crate) fn open(bytes: &[u8]) -> Result<Workbook> {
         sheets.push(Sheet {
             name,
             is_worksheet,
+            sheet_id,
             style_fidelity: StyleFidelity::Partial,
             sheet_type: Some(sheet_type),
             cells,

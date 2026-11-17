@@ -142,6 +142,8 @@ pub struct Sheet {
     pub name: String,
     /// Whether this is an actual worksheet (vs. a chart/macro sheet).
     pub is_worksheet: bool,
+    /// Excel-assigned sheet identifier from workbook metadata, when available.
+    pub(crate) sheet_id: Option<u32>,
     /// Style-retention fidelity for renderer/exporter diagnostics.
     pub(crate) style_fidelity: StyleFidelity,
     /// Date system used when formatting authored date cells. Workbook-created
@@ -591,6 +593,7 @@ impl Default for Sheet {
         Sheet {
             name: String::default(),
             is_worksheet: bool::default(),
+            sheet_id: None,
             style_fidelity: StyleFidelity::Unavailable,
             display_date1904: false,
             sheet_type: None,
@@ -774,6 +777,7 @@ impl Sheet {
             name: &self.name,
             sheet_type: self.sheet_type(),
             visible: self.visible(),
+            sheet_id: self.sheet_id(),
             dimensions: self.dimensions(),
             merged_ranges: self.merged_ranges(),
             hyperlinks: self.hyperlinks(),
@@ -1633,6 +1637,15 @@ impl Sheet {
         } else {
             SheetType::ChartSheet
         })
+    }
+
+    /// Excel-assigned sheet identifier from workbook metadata, when available.
+    ///
+    /// Populated by readers whose source format stores a stable sheet id
+    /// (`.xlsx` `<sheet sheetId>` and `.xlsb` `BrtBundleSh.iTabID`). Other
+    /// formats and authored sheets report `None`.
+    pub fn sheet_id(&self) -> Option<u32> {
+        self.sheet_id
     }
 
     /// Sheet visibility for metadata views.

@@ -3286,9 +3286,18 @@ fn bundle_sh_hsstate_visibility() {
         let (names, _, _, _, _, _, _, _, _) = parse_workbook(&rec(BRT_BUNDLE_SH, &p), &[]);
         names
     };
-    assert_eq!(bundle(0), vec![("S1".to_string(), "rId1".to_string(), 0)]);
-    assert_eq!(bundle(1), vec![("S1".to_string(), "rId1".to_string(), 1)]);
-    assert_eq!(bundle(2), vec![("S1".to_string(), "rId1".to_string(), 2)]);
+    assert_eq!(
+        bundle(0),
+        vec![("S1".to_string(), Some(0), "rId1".to_string(), 0)]
+    );
+    assert_eq!(
+        bundle(1),
+        vec![("S1".to_string(), Some(0), "rId1".to_string(), 1)]
+    );
+    assert_eq!(
+        bundle(2),
+        vec![("S1".to_string(), Some(0), "rId1".to_string(), 2)]
+    );
 }
 
 #[test]
@@ -3317,6 +3326,7 @@ fn xlsb_hidden_sheet_end_to_end() {
     let wb = Workbook::open(&bytes).unwrap();
     assert_eq!(wb.sheets.len(), 1);
     assert_eq!(wb.sheets[0].name, "Secret");
+    assert_eq!(wb.sheets[0].sheet_id(), Some(0));
     assert!(wb.sheets[0].is_hidden(), "hsState=1 => hidden");
     assert!(!wb.sheets[0].is_very_hidden());
 }
@@ -3368,26 +3378,31 @@ fn xlsb_bundle_sheet_preserves_sheet_types_end_to_end() {
                 name: "Data".to_string(),
                 typ: SheetType::WorkSheet,
                 visible: SheetVisible::Visible,
+                sheet_id: Some(1),
             },
             SheetMetadata {
                 name: "Chart".to_string(),
                 typ: SheetType::ChartSheet,
                 visible: SheetVisible::Visible,
+                sheet_id: Some(2),
             },
             SheetMetadata {
                 name: "Macro".to_string(),
                 typ: SheetType::MacroSheet,
                 visible: SheetVisible::Hidden,
+                sheet_id: Some(3),
             },
             SheetMetadata {
                 name: "Dialog".to_string(),
                 typ: SheetType::DialogSheet,
                 visible: SheetVisible::VeryHidden,
+                sheet_id: Some(4),
             },
             SheetMetadata {
                 name: "Module".to_string(),
                 typ: SheetType::Vba,
                 visible: SheetVisible::VeryHidden,
+                sheet_id: Some(5),
             },
         ]
     );

@@ -3094,21 +3094,25 @@ fn workbook_metadata_facade_groups_public_reader_metadata() {
                 name: "Data".into(),
                 typ: SheetType::WorkSheet,
                 visible: SheetVisible::Visible,
+                sheet_id: Some(1),
             },
             SheetMetadata {
                 name: "Summary".into(),
                 typ: SheetType::WorkSheet,
                 visible: SheetVisible::Visible,
+                sheet_id: Some(2),
             },
             SheetMetadata {
                 name: "Hidden".into(),
                 typ: SheetType::WorkSheet,
                 visible: SheetVisible::Hidden,
+                sheet_id: Some(3),
             },
             SheetMetadata {
                 name: "VeryHidden".into(),
                 typ: SheetType::WorkSheet,
                 visible: SheetVisible::VeryHidden,
+                sheet_id: Some(4),
             },
         ]
     );
@@ -3413,31 +3417,37 @@ fn xlsx_sheet_metadata_preserves_non_worksheet_types() {
                 name: "Data".into(),
                 typ: SheetType::WorkSheet,
                 visible: SheetVisible::Visible,
+                sheet_id: None,
             },
             SheetMetadata {
                 name: "Chart".into(),
                 typ: SheetType::ChartSheet,
                 visible: SheetVisible::Hidden,
+                sheet_id: None,
             },
             SheetMetadata {
                 name: "Dialog".into(),
                 typ: SheetType::DialogSheet,
                 visible: SheetVisible::VeryHidden,
+                sheet_id: None,
             },
             SheetMetadata {
                 name: "Macro".into(),
                 typ: SheetType::MacroSheet,
                 visible: SheetVisible::Visible,
+                sheet_id: None,
             },
             SheetMetadata {
                 name: "Excel4Macro".into(),
                 typ: SheetType::MacroSheet,
                 visible: SheetVisible::Hidden,
+                sheet_id: None,
             },
             SheetMetadata {
                 name: "IntlMacro".into(),
                 typ: SheetType::MacroSheet,
                 visible: SheetVisible::VeryHidden,
+                sheet_id: None,
             },
         ]
     );
